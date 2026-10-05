@@ -1,0 +1,2937 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consult OS — рабочий стол AI-консультанта</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+table{border-collapse:collapse;width:100%}
+ul,ol{list-style:none}
+
+:root{
+  --bg:#ffffff;
+  --surface-2:#fafafa;
+  --surface-3:#f5f5f5;
+  --surface-active:#e8eaed;
+  --text-1:#171717;
+  --text-2:#4d4d4d;
+  --text-3:#666666;
+  --text-muted:#808080;
+  --text-disabled:#b0b0b0;
+  --ring:0 0 0 1px rgba(0,0,0,0.08);
+  --ring-strong:0 0 0 1px rgba(0,0,0,0.16);
+  --row-div:0 1px 0 0 rgba(0,0,0,0.06);
+  --head-div:0 1px 0 0 rgba(0,0,0,0.10);
+  --focus:0 0 0 2px hsla(212,100%,48%,0.5);
+  --card-shadow:0 0 0 1px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04),inset 0 0 0 1px #fafafa;
+  --dropdown-shadow:0 0 0 1px rgba(0,0,0,0.08),0 8px 16px rgba(0,0,0,0.06);
+  --green:#10B981; --green-bg:#ECFDF5; --green-tx:#059669;
+  --red:#EF4444; --red-bg:#FEF2F2; --red-tx:#DC2626;
+  --orange:#F59E0B; --orange-bg:#FFFBEB; --orange-tx:#D97706;
+  --blue:#3B82F6; --blue-bg:#EFF6FF; --blue-tx:#1E40AF;
+  --gray:#9CA3AF; --gray-bg:#F9FAFB; --gray-tx:#6B7280;
+  --radius:6px;
+  --radius-lg:8px;
+}
+html,body{background:var(--bg)}
+body{
+  font-family:'Geist','Inter',system-ui,-apple-system,sans-serif;
+  font-feature-settings:'liga' 1,'calt' 1;
+  font-size:14px;line-height:1.4;color:var(--text-1);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+.mono{font-family:'Geist Mono',ui-monospace,SFMono-Regular,'Cascadia Code','Fira Code',monospace;font-feature-settings:'liga' 1,'tnum' 1}
+.tnum{font-variant-numeric:tabular-nums}
+h1,h2,h3,h4{font-weight:600;letter-spacing:-0.5px;color:var(--text-1)}
+h1{font-size:24px;letter-spacing:-0.96px;line-height:1.33}
+h2{font-size:18px;letter-spacing:-0.5px}
+h3{font-size:15px;letter-spacing:-0.2px}
+h4{font-size:13px;letter-spacing:0}
+:focus{outline:none}
+:focus-visible{box-shadow:var(--focus);border-radius:4px}
+
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--surface-2);
+  box-shadow:1px 0 0 0 rgba(0,0,0,0.06);
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;
+  z-index:20;
+}
+.sidebar-brand{display:flex;align-items:center;gap:10px;padding:16px 16px 18px}
+.brand-mark{
+  width:28px;height:28px;border-radius:6px;background:#171717;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;
+  letter-spacing:-0.4px;
+}
+.brand-text{display:flex;flex-direction:column;line-height:1.1}
+.brand-title{font-size:13px;font-weight:600;color:var(--text-1)}
+.brand-sub{font-size:11px;color:var(--text-muted)}
+.sidebar-nav{flex:1;overflow-y:auto;padding:4px 8px}
+.nav-section{padding:12px 8px 4px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.04em;color:#9CA3AF}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  height:32px;padding:0 8px;border-radius:5px;
+  color:var(--text-2);font-size:13px;font-weight:400;
+  cursor:pointer;user-select:none;
+  transition:background .08s ease;
+  position:relative;
+}
+.nav-item:hover{background:rgba(0,0,0,0.035);color:var(--text-1)}
+.nav-item.active{background:var(--surface-active);color:var(--text-1);font-weight:500}
+.nav-item.active::before{
+  content:'';position:absolute;left:0;top:6px;bottom:6px;width:2px;border-radius:2px;background:var(--blue);
+}
+.nav-item svg{flex-shrink:0;opacity:.85}
+.nav-item .nav-count{margin-left:auto;font-size:11px;font-family:'Geist Mono',monospace;color:var(--text-muted)}
+.nav-item.active .nav-count{color:var(--text-2)}
+.sidebar-footer{padding:10px 12px 14px;display:flex;flex-direction:column;gap:6px}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{
+  display:flex;align-items:center;gap:12px;
+  padding:18px 28px 14px;min-height:64px;
+  background:var(--bg);
+  border-bottom:0;
+  box-shadow:0 1px 0 0 rgba(0,0,0,0.06);
+  position:sticky;top:0;z-index:15;
+}
+.topbar-left{flex:1;min-width:0}
+.page-title{font-size:22px;font-weight:600;letter-spacing:-0.9px;line-height:1.2}
+.page-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.menu-btn{display:none}
+
+.page{padding:24px 28px 60px;max-width:1400px;width:100%}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:32px;padding:0 14px;border-radius:var(--radius);
+  font-size:13px;font-weight:500;color:var(--text-1);
+  background:transparent;transition:background .08s ease,box-shadow .08s ease;
+  white-space:nowrap;user-select:none;
+}
+.btn:hover{background:var(--surface-2)}
+.btn-primary{background:#171717;color:#fff}
+.btn-primary:hover{background:#333333}
+.btn-ghost{box-shadow:var(--ring)}
+.btn-ghost:hover{background:var(--surface-2);box-shadow:var(--ring-strong)}
+.btn-danger{color:var(--red-tx)}
+.btn-danger:hover{background:var(--red-bg)}
+.btn-block{width:100%;justify-content:center}
+.btn-sm{height:26px;padding:0 10px;font-size:12px}
+.btn-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:5px;color:var(--text-3);
+  transition:background .08s ease,color .08s ease;
+}
+.btn-icon:hover{background:var(--surface-3);color:var(--text-1)}
+.btn-icon:disabled{opacity:.4;cursor:not-allowed}
+
+.link{color:var(--blue);cursor:pointer;font-weight:500}
+.link:hover{text-decoration:underline}
+
+.card{
+  background:#fff;border-radius:var(--radius-lg);
+  box-shadow:var(--card-shadow);
+  padding:16px;
+}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:600;letter-spacing:-0.1px;color:var(--text-1)}
+.card-sub{font-size:11px;color:var(--text-muted);font-weight:400}
+.card-link{font-size:12px;color:var(--blue);cursor:pointer}
+.card-link:hover{text-decoration:underline}
+
+.metrics{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;margin-bottom:24px;
+}
+.metric{
+  background:#fff;border-radius:var(--radius-lg);padding:14px 16px;
+  box-shadow:var(--card-shadow);
+  display:flex;flex-direction:column;gap:4px;
+  position:relative;overflow:hidden;
+}
+.metric-label{font-size:12px;color:#6B7280;font-weight:400}
+.metric-value{font-size:22px;font-weight:600;letter-spacing:-0.6px;color:var(--text-1);line-height:1.15;font-variant-numeric:tabular-nums}
+.metric-foot{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px}
+.metric-foot .warn{color:var(--orange-tx);font-weight:500}
+
+.table-wrap{
+  background:#fff;border-radius:var(--radius-lg);box-shadow:var(--card-shadow);
+  overflow:hidden;
+}
+.table-scroll{overflow-x:auto}
+table.t{width:100%;font-size:13px}
+table.t thead th{
+  text-align:left;font-size:12px;font-weight:500;color:#6B7280;
+  padding:10px 14px;background:#fff;white-space:nowrap;
+  box-shadow:var(--head-div);
+  position:sticky;top:0;z-index:1;
+}
+table.t thead th.num,table.t tbody td.num{text-align:right;font-variant-numeric:tabular-nums}
+table.t tbody td{padding:10px 14px;box-shadow:var(--row-div);vertical-align:middle}
+table.t tbody tr{cursor:pointer;transition:background .06s ease}
+table.t tbody tr:hover{background:var(--surface-2)}
+table.t tbody tr:last-child td{box-shadow:none}
+table.t tbody td .sub{font-size:12px;color:var(--text-2);display:block;margin-top:2px}
+
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;vertical-align:middle}
+.status .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
+.status.tone-success .dot{background:var(--green)} .status.tone-success{color:var(--green-tx)}
+.status.tone-danger .dot{background:var(--red)}   .status.tone-danger{color:var(--red-tx)}
+.status.tone-warning .dot{background:var(--orange)}.status.tone-warning{color:var(--orange-tx)}
+.status.tone-info .dot{background:var(--blue)}    .status.tone-info{color:var(--blue-tx)}
+.status.tone-gray .dot{background:var(--gray)}    .status.tone-gray{color:var(--gray-tx)}
+
+.pill{
+  display:inline-flex;align-items:center;
+  height:18px;padding:0 8px;border-radius:9999px;
+  font-size:11px;font-weight:600;letter-spacing:0;
+}
+.pill.tone-success{background:var(--green-bg);color:var(--green-tx)}
+.pill.tone-danger{background:var(--red-bg);color:var(--red-tx)}
+.pill.tone-warning{background:var(--orange-bg);color:var(--orange-tx)}
+.pill.tone-info{background:var(--blue-bg);color:var(--blue-tx)}
+.pill.tone-gray{background:var(--gray-bg);color:var(--gray-tx)}
+
+.field-row{margin-bottom:14px}
+.field-row:last-child{margin-bottom:0}
+.field-label{
+  display:block;font-size:12px;font-weight:500;color:#6B7280;margin-bottom:6px;
+}
+.field-label .req{color:var(--red);margin-left:2px}
+.input,.select,.textarea{
+  width:100%;height:32px;padding:0 12px;
+  background:var(--surface-2);border:0;border-radius:var(--radius);
+  box-shadow:var(--ring);font-size:13px;color:var(--text-1);
+  transition:box-shadow .08s ease,background .08s ease;
+  font-family:inherit;
+}
+.textarea{height:auto;min-height:70px;padding:8px 12px;resize:vertical;line-height:1.45}
+.input::placeholder,.textarea::placeholder{color:var(--text-muted)}
+.input:focus,.select:focus,.textarea:focus{background:#fff;box-shadow:var(--focus)}
+.select{
+  appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center;
+  padding-right:30px;
+}
+.field-hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+
+.search{position:relative;flex:1;max-width:320px}
+.search input{
+  width:100%;height:32px;padding:0 12px 0 32px;font-size:13px;
+  background:var(--surface-2);border:0;border-radius:var(--radius);
+  box-shadow:var(--ring);
+}
+.search input:focus{background:#fff;box-shadow:var(--focus)}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+
+.seg{display:inline-flex;background:var(--surface-2);border-radius:6px;padding:2px;box-shadow:var(--ring)}
+.seg button{
+  height:26px;padding:0 10px;font-size:12px;font-weight:500;color:var(--text-2);
+  border-radius:4px;transition:background .08s ease,color .08s ease;
+}
+.seg button:hover{color:var(--text-1)}
+.seg button.active{background:#fff;color:var(--text-1);box-shadow:0 0 0 1px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04)}
+
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.toolbar .spacer{flex:1}
+
+.kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;align-items:flex-start}
+.kanban-col{
+  min-width:260px;width:260px;flex-shrink:0;background:var(--surface-2);
+  border-radius:var(--radius-lg);padding:10px;
+  display:flex;flex-direction:column;gap:8px;min-height:120px;
+  transition:background .1s ease;
+}
+.kanban-col.drag-over{background:var(--blue-bg);outline:1px dashed var(--blue);outline-offset:-4px}
+.kanban-col-head{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 6px}
+.kanban-col-title{font-size:12px;font-weight:600;color:var(--text-2);display:flex;align-items:center;gap:6px}
+.kanban-col-title .dot{width:7px;height:7px;border-radius:50%}
+.kanban-count{font-family:'Geist Mono',monospace;font-size:11px;color:var(--text-muted)}
+.kanban-card{
+  background:#fff;border-radius:6px;padding:10px 12px;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.03);
+  cursor:grab;transition:box-shadow .08s ease;
+  font-size:13px;
+}
+.kanban-card:hover{box-shadow:0 0 0 1px rgba(0,0,0,0.12),0 2px 6px rgba(0,0,0,0.05)}
+.kanban-card.dragging{opacity:.4}
+.kanban-card .kc-title{font-weight:500;color:var(--text-1);margin-bottom:4px;letter-spacing:-0.1px}
+.kanban-card .kc-client{font-size:12px;color:var(--text-2);margin-bottom:6px}
+.kanban-card .kc-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-muted)}
+.kanban-card .kc-date{font-variant-numeric:tabular-nums}
+.kanban-empty{font-size:12px;color:var(--text-muted);text-align:center;padding:16px 8px;font-style:italic}
+
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.obj-card{
+  background:#fff;border-radius:var(--radius-lg);padding:14px 16px;
+  box-shadow:var(--card-shadow);cursor:pointer;
+  transition:box-shadow .1s ease;
+  display:flex;flex-direction:column;gap:8px;
+}
+.obj-card:hover{box-shadow:0 0 0 1px rgba(0,0,0,0.14),0 4px 8px rgba(0,0,0,0.05)}
+.obj-card .oc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.obj-card .oc-title{font-size:14px;font-weight:600;letter-spacing:-0.15px;color:var(--text-1);line-height:1.25}
+.obj-card .oc-sub{font-size:12px;color:var(--text-2)}
+.obj-card .oc-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text-muted);margin-top:2px}
+.obj-card .oc-footer{display:flex;justify-content:space-between;align-items:center;padding-top:8px;box-shadow:0 -1px 0 0 rgba(0,0,0,0.05)}
+.obj-card .oc-footer .num{font-weight:600;letter-spacing:-0.2px;font-variant-numeric:tabular-nums}
+
+.list{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--card-shadow);overflow:hidden}
+.list-row{
+  display:flex;align-items:center;gap:14px;padding:12px 16px;cursor:pointer;
+  box-shadow:var(--row-div);transition:background .06s ease;
+}
+.list-row:hover{background:var(--surface-2)}
+.list-row:last-child{box-shadow:none}
+.list-row .lr-main{flex:1;min-width:0}
+.list-row .lr-title{font-size:13px;font-weight:500;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-row .lr-sub{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-row .lr-amt{font-variant-numeric:tabular-nums;font-weight:500;font-size:13px;white-space:nowrap}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(20,20,20,0.35);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:32px 16px;overflow-y:auto;z-index:1000;
+  animation:fadeIn .08s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:#fff;border-radius:10px;width:100%;max-width:520px;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.08),0 20px 40px rgba(0,0,0,0.14);
+  animation:slideUp .1s ease;
+  display:flex;flex-direction:column;max-height:calc(100vh - 64px);
+}
+@keyframes slideUp{from{transform:translateY(4px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-lg{max-width:720px}
+.modal-sm{max-width:380px}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:16px 20px;box-shadow:var(--row-div);
+}
+.modal-header h3{font-size:15px;font-weight:600;letter-spacing:-0.2px}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1}
+.modal-footer{
+  display:flex;justify-content:flex-end;gap:8px;
+  padding:12px 20px;box-shadow:0 -1px 0 0 rgba(0,0,0,0.06);
+  background:var(--surface-2);
+  border-radius:0 0 10px 10px;
+  flex-wrap:wrap;
+}
+.modal-form{display:flex;flex-direction:column;flex:1;min-height:0}
+
+#toast-root{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{
+  background:#171717;color:#fff;border-radius:6px;padding:8px 14px;
+  font-size:13px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.2);
+  animation:toastIn .12s ease;
+}
+.toast.error{background:var(--red)}
+@keyframes toastIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.empty{
+  padding:36px 20px;text-align:center;color:var(--text-muted);
+}
+.empty svg{margin-bottom:12px;opacity:.5}
+.empty h4{font-size:14px;color:var(--text-2);font-weight:500;margin-bottom:4px}
+.empty p{font-size:12px}
+
+.detail-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  margin-bottom:20px;flex-wrap:wrap;
+}
+.detail-title-wrap{display:flex;flex-direction:column;gap:6px;min-width:0}
+.detail-title{font-size:22px;font-weight:600;letter-spacing:-0.9px;color:var(--text-1);line-height:1.2}
+.detail-sub{font-size:13px;color:var(--text-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.detail-actions{display:flex;gap:6px;flex-wrap:wrap}
+.back-link{
+  display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);
+  cursor:pointer;margin-bottom:10px;padding:4px 0;
+}
+.back-link:hover{color:var(--text-1)}
+
+.kv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.kv{display:flex;flex-direction:column;gap:3px}
+.kv-label{font-size:11px;font-weight:500;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.04em}
+.kv-value{font-size:13px;color:var(--text-1)}
+.kv-value.muted{color:var(--text-muted)}
+
+.detail-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px}
+@media(max-width:960px){.detail-grid{grid-template-columns:1fr}}
+
+.stage-flow{display:flex;gap:4px;flex-wrap:wrap;margin:10px 0 4px}
+.stage-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 9px;font-size:11px;font-weight:500;
+  background:var(--surface-2);color:var(--text-3);border-radius:9999px;
+  box-shadow:var(--ring);cursor:pointer;
+  transition:background .08s ease,color .08s ease;
+}
+.stage-chip:hover{background:var(--surface-3)}
+.stage-chip.active{background:#171717;color:#fff;box-shadow:none}
+.stage-chip.done{background:var(--green-bg);color:var(--green-tx);box-shadow:none}
+
+.upnext-item{
+  display:flex;align-items:center;gap:12px;padding:10px 0;
+  box-shadow:var(--row-div);cursor:pointer;
+}
+.upnext-item:last-child{box-shadow:none}
+.upnext-item:hover .upnext-title{color:var(--blue)}
+.upnext-date{
+  flex-shrink:0;width:52px;text-align:center;font-variant-numeric:tabular-nums;
+  background:var(--surface-2);border-radius:6px;padding:6px 4px;
+  box-shadow:var(--ring);
+}
+.upnext-day{font-size:15px;font-weight:600;letter-spacing:-0.3px;color:var(--text-1);line-height:1.1}
+.upnext-mon{font-size:10px;text-transform:uppercase;color:var(--text-muted);margin-top:2px;font-weight:500}
+.upnext-main{flex:1;min-width:0}
+.upnext-title{font-size:13px;font-weight:500;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .08s ease}
+.upnext-sub{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.funnel-row{display:flex;align-items:center;gap:10px;padding:7px 0}
+.funnel-label{font-size:12px;color:var(--text-2);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.funnel-bar{flex:1;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.funnel-bar span{display:block;height:100%;border-radius:3px;background:#171717;transition:width .2s ease}
+.funnel-count{font-family:'Geist Mono',monospace;font-size:12px;color:var(--text-2);width:20px;text-align:right;font-variant-numeric:tabular-nums}
+
+.task-row{
+  display:flex;align-items:flex-start;gap:10px;padding:8px 0;
+  box-shadow:var(--row-div);
+}
+.task-row:last-child{box-shadow:none}
+.task-check{
+  flex-shrink:0;width:16px;height:16px;border-radius:4px;
+  box-shadow:var(--ring);margin-top:2px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .08s ease,box-shadow .08s ease;
+}
+.task-check:hover{background:var(--surface-2)}
+.task-check.done{background:#171717;box-shadow:none;color:#fff}
+.task-check.done svg{opacity:1}
+.task-check svg{opacity:0;color:#fff}
+.task-main{flex:1;min-width:0}
+.task-title{font-size:13px;color:var(--text-1);line-height:1.35}
+.task-row.done .task-title{color:var(--text-muted);text-decoration:line-through}
+.task-meta{font-size:11px;color:var(--text-muted);margin-top:2px;font-variant-numeric:tabular-nums}
+.task-meta.overdue{color:var(--red-tx);font-weight:500}
+
+.calendar{
+  background:#fff;border-radius:var(--radius-lg);box-shadow:var(--card-shadow);
+  overflow:hidden;
+}
+.cal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;box-shadow:var(--row-div);gap:10px;flex-wrap:wrap;
+}
+.cal-title{font-size:15px;font-weight:600;letter-spacing:-0.2px;text-transform:capitalize}
+.cal-nav{display:flex;gap:4px;align-items:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day-name{
+  padding:8px 10px;font-size:11px;font-weight:500;color:#6B7280;
+  text-transform:uppercase;letter-spacing:0.04em;box-shadow:var(--row-div);
+}
+.cal-cell{
+  min-height:96px;padding:6px 8px;box-shadow:var(--row-div);cursor:pointer;
+  transition:background .08s ease;position:relative;
+  display:flex;flex-direction:column;gap:3px;
+}
+.cal-cell:hover{background:var(--surface-2)}
+.cal-cell.out{color:var(--text-disabled)}
+.cal-cell.out .cal-num{color:var(--text-disabled)}
+.cal-cell.today .cal-num{background:#171717;color:#fff}
+.cal-num{
+  font-size:12px;font-weight:500;color:var(--text-2);
+  width:20px;height:20px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-variant-numeric:tabular-nums;
+}
+.cal-ev{
+  font-size:11px;padding:2px 6px;border-radius:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  line-height:1.4;
+}
+.cal-ev.session{background:var(--blue-bg);color:var(--blue-tx)}
+.cal-ev.task{background:var(--orange-bg);color:var(--orange-tx)}
+.cal-ev.payment{background:var(--green-bg);color:var(--green-tx)}
+.cal-more{font-size:10px;color:var(--text-muted);margin-top:2px}
+.cal-week .cal-cell{min-height:180px}
+
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.week-head{display:grid;grid-template-columns:repeat(7,1fr);box-shadow:var(--row-div)}
+.week-head-cell{padding:8px 10px;font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.04em;text-align:center;font-weight:500;cursor:pointer}
+.week-head-cell.today{color:var(--text-1)}
+.week-head-cell .num{display:block;font-size:15px;font-weight:600;color:var(--text-1);letter-spacing:-0.3px;margin-top:2px}
+
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.mini-tag{
+  display:inline-flex;align-items:center;height:20px;padding:0 8px;
+  border-radius:4px;font-size:11px;font-weight:500;
+  background:var(--surface-2);color:var(--text-2);
+  box-shadow:var(--ring);
+}
+.divider{height:1px;background:rgba(0,0,0,0.06);margin:16px 0}
+.muted{color:var(--text-muted)}
+.sub{color:var(--text-2);font-size:12px}
+.nowrap{white-space:nowrap}
+.flex{display:flex;align-items:center}
+.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-24{margin-top:24px}
+.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-24{margin-bottom:24px}
+.right{margin-left:auto}
+.hidden{display:none !important}
+
+@media (max-width:1023px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .18s ease;width:240px;box-shadow:1px 0 0 0 rgba(0,0,0,0.06),12px 0 32px rgba(0,0,0,0.08)}
+  .sidebar.open{transform:translateX(0)}
+  .menu-btn{display:inline-flex}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .page{padding:20px 18px 60px}
+  .topbar{padding:14px 18px 12px}
+}
+@media (max-width:600px){
+  .metrics{grid-template-columns:1fr}
+  .detail-head{flex-direction:column;align-items:stretch}
+  .page{padding:16px 14px 60px}
+  .topbar{padding:12px 14px 10px;min-height:56px}
+  .page-title{font-size:19px}
+  .kanban-col{min-width:240px;width:240px}
+  .cal-cell{min-height:72px;padding:4px 5px}
+  .cal-ev{font-size:10px;padding:1px 4px}
+  .modal-overlay{padding:12px;align-items:flex-start}
+  .modal{max-height:calc(100vh - 24px)}
+  .seg button{padding:0 8px;font-size:11px}
+  table.t tbody td,table.t thead th{padding:9px 10px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">AI</div>
+      <div class="brand-text">
+        <div class="brand-title">Consult OS</div>
+        <div class="brand-sub">рабочий стол</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" id="btn-remove-demo" hidden>Удалить тестовые данные</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="btn-icon menu-btn" id="menu-btn" aria-label="Меню">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="topbar-left">
+        <h1 class="page-title" id="page-title"></h1>
+        <p class="page-sub" id="page-sub"></p>
+      </div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </header>
+    <div class="page" id="page-root"></div>
+  </main>
+</div>
+
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+/* =========================================================================
+   UTILS
+   ========================================================================= */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+function esc(s){
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function uid(prefix='id'){
+  return prefix + '_' + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+}
+function todayISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function nowLocalISO(){
+  const d = new Date();
+  return todayISO() + 'T' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function parseDate(s){
+  if (!s) return null;
+  if (s.length === 10){
+    const [y,m,d] = s.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+function formatDate(s){
+  const d = parseDate(s);
+  if (!d) return '—';
+  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+}
+function formatDateTime(s){
+  const d = parseDate(s);
+  if (!d) return '—';
+  return formatDate(s) + ' · ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function formatTime(s){
+  const d = parseDate(s);
+  if (!d) return '';
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function formatMoney(n){
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const num = Math.round(Number(n));
+  return num.toLocaleString('ru-RU').replace(/,/g,' ') + ' ₽';
+}
+function formatHours(min){
+  min = Number(min) || 0;
+  if (!min) return '0 ч';
+  const h = Math.floor(min/60), m = min % 60;
+  if (h && m) return h + ' ч ' + m + ' мин';
+  if (h) return h + ' ч';
+  return m + ' мин';
+}
+function relativeDate(s){
+  const d = parseDate(s);
+  if (!d) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dd = new Date(d); dd.setHours(0,0,0,0);
+  const diff = Math.round((dd - today) / 86400000);
+  if (diff === 0) return 'сегодня';
+  if (diff === 1) return 'завтра';
+  if (diff === -1) return 'вчера';
+  if (diff > 1 && diff < 7) return 'через ' + diff + ' дн.';
+  if (diff < -1 && diff > -7) return Math.abs(diff) + ' дн. назад';
+  return formatDate(s);
+}
+function isOverdue(s){
+  if (!s) return false;
+  const d = parseDate(s);
+  if (!d) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dd = new Date(d); dd.setHours(0,0,0,0);
+  return dd < today;
+}
+function toISODateOnly(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function addMonths(d, n){ const x = new Date(d); x.setMonth(x.getMonth() + n); return x; }
+
+/* =========================================================================
+   STORAGE
+   ========================================================================= */
+const STORAGE_KEY = 'ai_consult_dashboard_v1';
+
+const storage = {
+  load(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || typeof data !== 'object') return null;
+      return {
+        clients:     Array.isArray(data.clients) ? data.clients : [],
+        sessions:    Array.isArray(data.sessions) ? data.sessions : [],
+        tasks:       Array.isArray(data.tasks) ? data.tasks : [],
+        payments:    Array.isArray(data.payments) ? data.payments : [],
+        timeEntries: Array.isArray(data.timeEntries) ? data.timeEntries : [],
+        materials:   Array.isArray(data.materials) ? data.materials : [],
+        meta:        (data.meta && typeof data.meta === 'object') ? data.meta : { demoDataRemoved:false }
+      };
+    } catch(e){
+      console.warn('storage load failed', e);
+      return null;
+    }
+  },
+  save(data){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    catch(e){ console.warn('storage save failed', e); }
+  },
+  clear(){ try { localStorage.removeItem(STORAGE_KEY); } catch(e){} }
+};
+
+/* =========================================================================
+   CONSTANTS
+   ========================================================================= */
+const STAGES = [
+  { id:'new',              label:'Написали',              tone:'gray' },
+  { id:'discussed',        label:'Обсудили идею',         tone:'info' },
+  { id:'scheduled',        label:'Договорились о времени',tone:'info' },
+  { id:'prepaid',          label:'Предоплата',            tone:'warning' },
+  { id:'in_progress',      label:'Занятие',               tone:'info' },
+  { id:'awaiting_payment', label:'Доплата',               tone:'warning' },
+  { id:'completed',        label:'Завершено',             tone:'success' }
+];
+const STAGE_MAP = Object.fromEntries(STAGES.map(s => [s.id, s]));
+
+const CLIENT_STATUS = [
+  { id:'lead',   label:'Лид',       tone:'info' },
+  { id:'active', label:'Активный',  tone:'success' },
+  { id:'paused', label:'На паузе',  tone:'warning' },
+  { id:'former', label:'Бывший',    tone:'gray' }
+];
+const CLIENT_STATUS_MAP = Object.fromEntries(CLIENT_STATUS.map(s => [s.id, s]));
+
+const PAYMENT_TYPES = [
+  { id:'prepay', label:'Предоплата' },
+  { id:'final',  label:'Доплата' },
+  { id:'other',  label:'Другое' }
+];
+const PAYMENT_TYPE_MAP = Object.fromEntries(PAYMENT_TYPES.map(p => [p.id, p]));
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+let state = storage.load();
+if (!state){
+  state = seedState();
+  storage.save(state);
+}
+
+let route = { page:'dashboard', id:null };
+let ui = { clientView:'table', sessionView:'kanban', calendarMode:'month', calendarCursor: new Date() };
+
+function persist(){ storage.save(state); }
+
+/* =========================================================================
+   DEMO DATA
+   ========================================================================= */
+function seedState(){
+  const D = 86400000;
+  const t = new Date(); t.setHours(0,0,0,0);
+  const iso = d => toISODateOnly(d);
+  const dt = (d, hh, mm=0) => { const x = new Date(d); x.setHours(hh,mm,0,0); return iso(x) + 'T' + String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0'); };
+  const inDays = n => new Date(t.getTime() + n*D);
+
+  const clients = [
+    { id:'c_demo1', name:'Иван Соколов', company:'ООО «Ромашка»', contactPerson:'Иван Соколов',
+      phone:'+7 999 123-45-67', email:'ivan@romashka.ru', messenger:'@ivan_sk',
+      industry:'Ритейл', status:'active', source:'Рекомендация',
+      notes:'Хотят внедрить AI-ассистента в поддержку клиентов. Начать с пилота на 2 недели.',
+      createdAt: iso(inDays(-30)), isDemo:true },
+    { id:'c_demo2', name:'Мария Кузнецова', company:'«Кузнецова и партнёры»', contactPerson:'Мария Кузнецова',
+      phone:'+7 916 555-22-11', email:'m.k@kuznetsova-legal.ru', messenger:'@m_kuznetsova',
+      industry:'Юридические услуги', status:'active', source:'Сайт',
+      notes:'Автоматизация работы с договорами. GPT для черновиков и проверки.',
+      createdAt: iso(inDays(-22)), isDemo:true },
+    { id:'c_demo3', name:'Антон Белов', company:'ООО «ТехноПоток»', contactPerson:'Антон Белов',
+      phone:'+7 903 777-88-99', email:'a.belov@technopotok.ru', messenger:'@abelov',
+      industry:'Логистика', status:'active', source:'LinkedIn',
+      notes:'Прогноз загрузки склада. Интерес к ML, но начать с простого.',
+      createdAt: iso(inDays(-14)), isDemo:true },
+    { id:'c_demo4', name:'Алексей Морозов', company:'«Морозов Медиа»', contactPerson:'Алексей Морозов',
+      phone:'+7 926 111-33-77', email:'alex@morozov.media', messenger:'@amorozov',
+      industry:'Медиа', status:'paused', source:'Telegram-канал',
+      notes:'Контент-фабрика на паузе до октября. Клиент доплачивает за прошлое занятие.',
+      createdAt: iso(inDays(-45)), isDemo:true },
+    { id:'c_demo5', name:'Светлана Григорьева', company:'«Смарт-Сад»', contactPerson:'Светлана Григорьева',
+      phone:'+7 985 202-10-10', email:'svetlana@smart-sad.ru', messenger:'@sv_grig',
+      industry:'E-commerce', status:'lead', source:'Рекомендация',
+      notes:'Первичная консультация. Хочет понять, с чего начать внедрение AI.',
+      createdAt: iso(inDays(-3)), isDemo:true }
+  ];
+
+  const sessions = [
+    { id:'s_demo1', clientId:'c_demo1', title:'Внедрение AI-ассистента в поддержку',
+      description:'Пилот: ассистент на базе GPT для ответов на частые вопросы в поддержке.',
+      stage:'in_progress', scheduledAt: dt(inDays(3), 14, 0), durationMin:120,
+      hourlyRate:8000, amount:32000, notes:'Сессия в Zoom. Прислать доступы к базе знаний.',
+      createdAt: iso(inDays(-25)), isDemo:true },
+    { id:'s_demo2', clientId:'c_demo2', title:'GPT для юридических документов',
+      description:'Разбор договоров, черновики типовых документов, шаблоны промптов.',
+      stage:'prepaid', scheduledAt: dt(inDays(1), 11, 0), durationMin:90,
+      hourlyRate:10000, amount:40000, notes:'Мария прислала примеры договоров. Предоплата внесена.',
+      createdAt: iso(inDays(-20)), isDemo:true },
+    { id:'s_demo3', clientId:'c_demo3', title:'Прогноз загрузки склада',
+      description:'Оценка данных. Простой прогноз на исторических данных.',
+      stage:'scheduled', scheduledAt: dt(inDays(7), 10, 0), durationMin:120,
+      hourlyRate:9000, amount:24000, notes:'Ждём выгрузку CSV с историей за 2 года.',
+      createdAt: iso(inDays(-10)), isDemo:true },
+    { id:'s_demo4', clientId:'c_demo4', title:'Контент-фабрика',
+      description:'Генерация текстов для соцсетей и рассылок. Шаблоны и tone of voice.',
+      stage:'awaiting_payment', scheduledAt: dt(inDays(-5), 15, 0), durationMin:180,
+      hourlyRate:8000, amount:48000, notes:'Занятие проведено. Ожидается доплата 16 000 ₽.',
+      createdAt: iso(inDays(-40)), isDemo:true },
+    { id:'s_demo5', clientId:'c_demo5', title:'Первичная диагностика',
+      description:'Разбор бизнеса, поиск точек применения AI, оценка усилий.',
+      stage:'new', scheduledAt:null, durationMin:60,
+      hourlyRate:7000, amount:8000, notes:'Пока просто переписка в Telegram.',
+      createdAt: iso(inDays(-3)), isDemo:true }
+  ];
+
+  const tasks = [
+    { id:'t_demo1', clientId:'c_demo3', sessionId:'s_demo3', title:'Отправить шаблон КП',
+      dueDate: iso(inDays(2)), done:false, priority:'normal', createdAt: iso(inDays(-2)), isDemo:true },
+    { id:'t_demo2', clientId:'c_demo1', sessionId:'s_demo1', title:'Подготовить демо ассистента',
+      dueDate: iso(inDays(2)), done:false, priority:'high', createdAt: iso(inDays(-1)), isDemo:true },
+    { id:'t_demo3', clientId:'c_demo4', sessionId:'s_demo4', title:'Напомнить о доплате',
+      dueDate: todayISO(), done:false, priority:'high', createdAt: iso(inDays(-1)), isDemo:true },
+    { id:'t_demo4', clientId:'c_demo1', sessionId:'s_demo1', title:'Собрать примеры ответов поддержки',
+      dueDate: iso(inDays(5)), done:true, priority:'normal', createdAt: iso(inDays(-8)), isDemo:true }
+  ];
+
+  const payments = [
+    { id:'p_demo1', clientId:'c_demo1', sessionId:'s_demo1', amount:16000, type:'prepay',
+      date: iso(inDays(-2)), note:'50% предоплата', createdAt: iso(inDays(-2)), isDemo:true },
+    { id:'p_demo2', clientId:'c_demo2', sessionId:'s_demo2', amount:24000, type:'prepay',
+      date: iso(inDays(-1)), note:'Предоплата перед занятием', createdAt: iso(inDays(-1)), isDemo:true },
+    { id:'p_demo3', clientId:'c_demo4', sessionId:'s_demo4', amount:24000, type:'prepay',
+      date: iso(inDays(-10)), note:'Предоплата', createdAt: iso(inDays(-10)), isDemo:true },
+    { id:'p_demo4', clientId:'c_demo4', sessionId:'s_demo4', amount:8000, type:'final',
+      date: iso(inDays(-4)), note:'Частичная доплата', createdAt: iso(inDays(-4)), isDemo:true }
+  ];
+
+  const timeEntries = [
+    { id:'te_demo1', clientId:'c_demo1', sessionId:'s_demo1', minutes:90,
+      date: iso(inDays(-2)), description:'Созвон-диагностика, разбор процессов поддержки',
+      createdAt: iso(inDays(-2)), isDemo:true },
+    { id:'te_demo2', clientId:'c_demo2', sessionId:'s_demo2', minutes:60,
+      date: iso(inDays(-1)), description:'Разбор договоров, подготовка шаблонов',
+      createdAt: iso(inDays(-1)), isDemo:true },
+    { id:'te_demo3', clientId:'c_demo4', sessionId:'s_demo4', minutes:120,
+      date: iso(inDays(-5)), description:'Занятие по контент-фабрике',
+      createdAt: iso(inDays(-5)), isDemo:true }
+  ];
+
+  const materials = [
+    { id:'m_demo1', title:'Промптинг для бизнеса', description:'Базовый гайд: структура промпта, роли, примеры.',
+      url:'https://example.com/prompting-guide', tags:['основы','промптинг'], createdAt: iso(inDays(-60)), isDemo:true },
+    { id:'m_demo2', title:'Чек-лист оценки AI-проекта', description:'Что проверить перед стартом: данные, метрики, стоимость.',
+      url:'https://example.com/ai-checklist', tags:['оценка','чек-лист'], createdAt: iso(inDays(-45)), isDemo:true },
+    { id:'m_demo3', title:'Шаблон ТЗ на внедрение GPT', description:'Готовый документ для клиента.',
+      url:'https://example.com/tz-template', tags:['шаблон','документы'], createdAt: iso(inDays(-30)), isDemo:true },
+    { id:'m_demo4', title:'Полезные инструменты', description:'OpenAI, Anthropic, локальные модели, векторные БД.',
+      url:'https://example.com/tools', tags:['инструменты'], createdAt: iso(inDays(-20)), isDemo:true },
+    { id:'m_demo5', title:'Кейсы: розница, юристы, логистика', description:'Примеры внедрений с результатами.',
+      url:'https://example.com/cases', tags:['кейсы'], createdAt: iso(inDays(-10)), isDemo:true }
+  ];
+
+  return { clients, sessions, tasks, payments, timeEntries, materials,
+    meta:{ demoDataRemoved:false } };
+}
+
+/* =========================================================================
+   LOOKUPS
+   ========================================================================= */
+const getClient    = id => state.clients.find(c => c.id === id) || null;
+const getSession   = id => state.sessions.find(s => s.id === id) || null;
+const getTask      = id => state.tasks.find(t => t.id === id) || null;
+const getMaterial  = id => state.materials.find(m => m.id === id) || null;
+
+function clientName(id){
+  const c = getClient(id);
+  if (!c) return '—';
+  return c.company ? c.name + ' · ' + c.company : c.name;
+}
+function sessionPaid(sessionId){
+  return state.payments
+    .filter(p => p.sessionId === sessionId)
+    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+}
+function sessionTime(sessionId){
+  return state.timeEntries
+    .filter(t => t.sessionId === sessionId)
+    .reduce((sum, t) => sum + (Number(t.minutes) || 0), 0);
+}
+function sessionDebt(s){
+  const paid = sessionPaid(s.id);
+  return Math.max(0, (Number(s.amount)||0) - paid);
+}
+function clientPaid(clientId){
+  return state.payments
+    .filter(p => p.clientId === clientId)
+    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+}
+function clientDebt(clientId){
+  return state.sessions
+    .filter(s => s.clientId === clientId)
+    .reduce((sum, s) => sum + sessionDebt(s), 0);
+}
+function clientSessions(clientId){
+  return state.sessions.filter(s => s.clientId === clientId);
+}
+function clientTasks(clientId){
+  return state.tasks.filter(t => t.clientId === clientId);
+}
+function isActiveSession(s){
+  return s.stage !== 'completed';
+}
+function hasDemoData(){
+  if (state.meta.demoDataRemoved) return false;
+  return ['clients','sessions','tasks','payments','timeEntries','materials']
+    .some(k => state[k].some(x => x.isDemo));
+}
+
+/* =========================================================================
+   ACTIONS
+   ========================================================================= */
+const actions = {
+  addClient(data){
+    const c = { id: uid('c'), createdAt: todayISO(), ...data };
+    state.clients.push(c); persist(); return c;
+  },
+  updateClient(id, data){
+    const c = getClient(id); if (!c) return;
+    Object.assign(c, data); persist();
+  },
+  deleteClient(id){
+    state.clients = state.clients.filter(c => c.id !== id);
+    state.sessions = state.sessions.filter(s => s.clientId !== id);
+    state.tasks    = state.tasks.filter(t => t.clientId !== id);
+    state.payments = state.payments.filter(p => p.clientId !== id);
+    state.timeEntries = state.timeEntries.filter(t => t.clientId !== id);
+    persist();
+  },
+
+  addSession(data){
+    const s = { id: uid('s'), createdAt: todayISO(), ...data };
+    state.sessions.push(s); persist(); return s;
+  },
+  updateSession(id, data){
+    const s = getSession(id); if (!s) return;
+    Object.assign(s, data); persist();
+  },
+  deleteSession(id){
+    state.sessions = state.sessions.filter(s => s.id !== id);
+    state.tasks    = state.tasks.filter(t => t.sessionId !== id);
+    state.payments = state.payments.filter(p => p.sessionId !== id);
+    state.timeEntries = state.timeEntries.filter(t => t.sessionId !== id);
+    persist();
+  },
+
+  addTask(data){
+    const t = { id: uid('t'), createdAt: todayISO(), done:false, ...data };
+    state.tasks.push(t); persist(); return t;
+  },
+  updateTask(id, data){
+    const t = getTask(id); if (!t) return;
+    Object.assign(t, data); persist();
+  },
+  deleteTask(id){
+    state.tasks = state.tasks.filter(t => t.id !== id);
+    persist();
+  },
+
+  addPayment(data){
+    const p = { id: uid('p'), createdAt: todayISO(), ...data };
+    state.payments.push(p); persist(); return p;
+  },
+  updatePayment(id, data){
+    const p = state.payments.find(x => x.id === id); if (!p) return;
+    Object.assign(p, data); persist();
+  },
+  deletePayment(id){
+    state.payments = state.payments.filter(x => x.id !== id);
+    persist();
+  },
+
+  addTimeEntry(data){
+    const e = { id: uid('te'), createdAt: todayISO(), ...data };
+    state.timeEntries.push(e); persist(); return e;
+  },
+  updateTimeEntry(id, data){
+    const e = state.timeEntries.find(x => x.id === id); if (!e) return;
+    Object.assign(e, data); persist();
+  },
+  deleteTimeEntry(id){
+    state.timeEntries = state.timeEntries.filter(e => e.id !== id);
+    persist();
+  },
+
+  addMaterial(data){
+    const m = { id: uid('m'), createdAt: todayISO(), ...data };
+    state.materials.push(m); persist(); return m;
+  },
+  updateMaterial(id, data){
+    const m = getMaterial(id); if (!m) return;
+    Object.assign(m, data); persist();
+  },
+  deleteMaterial(id){
+    state.materials = state.materials.filter(m => m.id !== id);
+    persist();
+  },
+
+  removeDemoData(){
+    const demoSessions = new Set(state.sessions.filter(x => x.isDemo).map(x => x.id));
+    const demoClients  = new Set(state.clients.filter(x => x.isDemo).map(x => x.id));
+    const demoPayments = new Set(state.payments.filter(x => x.isDemo).map(x => x.id));
+    const demoTasks    = new Set(state.tasks.filter(x => x.isDemo).map(x => x.id));
+    const demoTime     = new Set(state.timeEntries.filter(x => x.isDemo).map(x => x.id));
+    const demoMats     = new Set(state.materials.filter(x => x.isDemo).map(x => x.id));
+
+    state.sessions    = state.sessions.filter(x => !demoSessions.has(x.id));
+    state.clients     = state.clients.filter(x => !demoClients.has(x.id));
+    state.payments    = state.payments.filter(x => !demoPayments.has(x.id));
+    state.tasks       = state.tasks.filter(x => !demoTasks.has(x.id));
+    state.timeEntries = state.timeEntries.filter(x => !demoTime.has(x.id));
+    state.materials   = state.materials.filter(x => !demoMats.has(x.id));
+
+    const clientIds = new Set(state.clients.map(c => c.id));
+    const sessionIds = new Set(state.sessions.map(s => s.id));
+    state.sessions.forEach(s => { if (s.clientId && !clientIds.has(s.clientId)) s.clientId = null; });
+    state.tasks.forEach(t => {
+      if (t.clientId && !clientIds.has(t.clientId)) t.clientId = null;
+      if (t.sessionId && !sessionIds.has(t.sessionId)) t.sessionId = null;
+    });
+    state.payments.forEach(p => {
+      if (p.clientId && !clientIds.has(p.clientId)) p.clientId = null;
+      if (p.sessionId && !sessionIds.has(p.sessionId)) p.sessionId = null;
+    });
+    state.timeEntries.forEach(e => {
+      if (e.clientId && !clientIds.has(e.clientId)) e.clientId = null;
+      if (e.sessionId && !sessionIds.has(e.sessionId)) e.sessionId = null;
+    });
+
+    state.meta.demoDataRemoved = true;
+    persist();
+  }
+};
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+function toast(msg, type='success'){
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type === 'error' ? 'error' : 'success');
+  el.textContent = msg;
+  $('#toast-root').appendChild(el);
+  setTimeout(() => el.remove(), 2400);
+}
+
+/* =========================================================================
+   MODAL
+   ========================================================================= */
+const modalStack = [];
+
+function openModal({ title, bodyHTML, footerHTML, size='', onMount, onSubmit, submitLabel='Сохранить', showFooter=true }){
+  const id = uid('modal');
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.dataset.modalId = id;
+  overlay.style.zIndex = 1000 + modalStack.length * 10;
+
+  const hasForm = typeof onSubmit === 'function';
+  let footerContent = '';
+  if (footerHTML !== undefined && footerHTML !== null){
+    footerContent = footerHTML;
+  } else if (showFooter){
+    footerContent = `<button type="button" class="btn btn-ghost" data-close>Отмена</button>`;
+    if (hasForm){
+      footerContent += `<button type="submit" class="btn btn-primary">${esc(submitLabel)}</button>`;
+    }
+  }
+  const footer = footerContent ? `<div class="modal-footer">${footerContent}</div>` : '';
+
+  overlay.innerHTML = `
+    <div class="modal ${size}">
+      <div class="modal-header">
+        <h3>${esc(title || '')}</h3>
+        <button type="button" class="btn-icon" data-close aria-label="Закрыть">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form class="modal-form" onsubmit="return false">
+        <div class="modal-body">${bodyHTML || ''}</div>
+        ${footer}
+      </form>
+    </div>
+  `;
+
+  const root = $('#modal-root');
+  root.appendChild(overlay);
+
+  const instance = { id, overlay, close };
+  modalStack.push(instance);
+
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) close();
+  });
+  overlay.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
+
+  const form = overlay.querySelector('form');
+  if (form && hasForm){
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const values = readFormValues(form);
+      const result = onSubmit(values, form);
+      if (result === false) return;
+      close();
+    });
+  }
+
+  if (typeof onMount === 'function') onMount(overlay, instance);
+  const firstInput = overlay.querySelector('input:not([type=hidden]),textarea,select');
+  if (firstInput) setTimeout(() => firstInput.focus(), 30);
+
+  function close(){
+    const idx = modalStack.indexOf(instance);
+    if (idx >= 0) modalStack.splice(idx, 1);
+    overlay.remove();
+  }
+  return instance;
+}
+
+function closeTopModal(){
+  if (modalStack.length) modalStack[modalStack.length - 1].close();
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && modalStack.length){
+    e.stopPropagation();
+    closeTopModal();
+  }
+});
+
+function confirmModal({ title='Подтвердите', message, confirmLabel='Удалить', onConfirm }){
+  openModal({
+    title, size:'modal-sm',
+    bodyHTML:`<p style="font-size:13px;color:#4d4d4d;line-height:1.5">${message}</p>`,
+    footerHTML:`
+      <button type="button" class="btn btn-ghost" data-close>Отмена</button>
+      <button type="button" class="btn btn-primary" id="confirm-btn">${esc(confirmLabel)}</button>
+    `,
+    onMount(overlay, instance){
+      overlay.querySelector('#confirm-btn').addEventListener('click', () => {
+        instance.close();
+        try { onConfirm(); } catch(e){ console.error(e); }
+      });
+    }
+  });
+}
+
+function readFormValues(form){
+  const data = {};
+  form.querySelectorAll('input,select,textarea').forEach(el => {
+    if (!el.name) return;
+    if (el.type === 'checkbox') data[el.name] = el.checked;
+    else if (el.type === 'number') data[el.name] = el.value === '' ? null : Number(el.value);
+    else data[el.name] = el.value;
+  });
+  return data;
+}
+
+function formFieldHTML(f, value){
+  const id = 'f_' + f.name + '_' + Math.random().toString(36).slice(2,6);
+  const v = value === null || value === undefined ? (f.default !== undefined ? f.default : '') : value;
+  const req = f.required ? 'required' : '';
+  const label = `<label class="field-label" for="${id}">${esc(f.label)}${f.required ? ' <span class="req">*</span>' : ''}</label>`;
+  let input = '';
+  if (f.type === 'textarea'){
+    input = `<textarea class="textarea" id="${id}" name="${f.name}" ${req} placeholder="${esc(f.placeholder||'')}" rows="${f.rows||3}">${esc(v)}</textarea>`;
+  } else if (f.type === 'select'){
+    const opts = (f.options||[]).map(o =>
+      `<option value="${esc(o.value)}" ${String(v) === String(o.value) ? 'selected' : ''}>${esc(o.label)}</option>`
+    ).join('');
+    const createOpt = f.creatable ? `<option value="__create__">+ Создать новый…</option>` : '';
+    input = `<select class="select" id="${id}" name="${f.name}" ${req} data-creatable='${f.creatable ? esc(JSON.stringify(f.creatable)) : ''}'>
+      ${f.placeholder ? `<option value="">${esc(f.placeholder)}</option>` : ''}
+      ${opts}${createOpt}
+    </select>`;
+  } else if (f.type === 'number'){
+    input = `<input class="input tnum" type="number" id="${id}" name="${f.name}" ${req} value="${esc(v)}" placeholder="${esc(f.placeholder||'')}" ${f.min!==undefined?`min="${f.min}"`:''} ${f.step!==undefined?`step="${f.step}"`:''}>`;
+  } else if (f.type === 'date'){
+    input = `<input class="input" type="date" id="${id}" name="${f.name}" ${req} value="${esc(v)}">`;
+  } else if (f.type === 'datetime-local'){
+    input = `<input class="input" type="datetime-local" id="${id}" name="${f.name}" ${req} value="${esc(v)}">`;
+  } else if (f.type === 'time'){
+    input = `<input class="input" type="time" id="${id}" name="${f.name}" ${req} value="${esc(v)}">`;
+  } else if (f.type === 'checkbox'){
+    input = `<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#171717">
+      <input type="checkbox" name="${f.name}" ${v ? 'checked' : ''}> ${esc(f.checkboxLabel||'')}
+    </label>`;
+  } else if (f.type === 'hidden'){
+    return `<input type="hidden" name="${f.name}" value="${esc(v)}">`;
+  } else {
+    input = `<input class="input" type="${f.type||'text'}" id="${id}" name="${f.name}" ${req} value="${esc(v)}" placeholder="${esc(f.placeholder||'')}">`;
+  }
+  const hint = f.hint ? `<div class="field-hint">${esc(f.hint)}</div>` : '';
+  return `<div class="field-row" data-field="${f.name}">${label}${input}${hint}</div>`;
+}
+
+function formFieldsHTML(fields, values){
+  values = values || {};
+  return fields.map(f => formFieldHTML(f, values[f.name])).join('');
+}
+
+/* =========================================================================
+   CREATABLE SELECT
+   ========================================================================= */
+document.addEventListener('focusin', e => {
+  if (e.target.matches && e.target.matches('select[data-creatable]')){
+    e.target.dataset.prev = e.target.value;
+  }
+});
+document.addEventListener('change', e => {
+  const sel = e.target;
+  if (!sel.matches || !sel.matches('select[data-creatable]')) return;
+  if (sel.value !== '__create__') return;
+  const raw = sel.dataset.creatable;
+  if (!raw || raw === 'undefined' || raw === '') { sel.value = sel.dataset.prev || ''; return; }
+  let cfg; try { cfg = JSON.parse(raw); } catch(_) { sel.value = sel.dataset.prev || ''; return; }
+  const prev = sel.dataset.prev || '';
+  sel.value = prev;
+  openCreatableForm(sel, cfg);
+});
+
+function openCreatableForm(selectEl, cfg){
+  openModal({
+    title: cfg.modalTitle || 'Создать',
+    bodyHTML: formFieldsHTML(cfg.fields, {}),
+    submitLabel: cfg.submitLabel || 'Создать',
+    size: 'modal-sm',
+    onSubmit(values){
+      for (const f of cfg.fields){
+        if (f.required && !String(values[f.name] || '').trim()){
+          toast('Заполните обязательное поле: ' + f.label, 'error');
+          return false;
+        }
+      }
+      const entity = cfg.create(values);
+      const opt = document.createElement('option');
+      opt.value = entity.id;
+      opt.textContent = cfg.getLabel(entity);
+      selectEl.insertBefore(opt, selectEl.querySelector('option[value="__create__"]'));
+      selectEl.value = entity.id;
+      selectEl.dataset.prev = entity.id;
+      toast(cfg.toast || 'Создано');
+      return true;
+    }
+  });
+}
+
+/* =========================================================================
+   NAV
+   ========================================================================= */
+const NAV = [
+  { id:'dashboard', label:'Дашборд',     icon:iconDashboard, section:'Обзор' },
+  { id:'clients',   label:'Клиенты',     icon:iconUsers,     section:'Работа' },
+  { id:'sessions',  label:'Занятия',     icon:iconMessage,   section:'Работа' },
+  { id:'calendar',  label:'Календарь',   icon:iconCalendar,  section:'Работа' },
+  { id:'tasks',     label:'Задачи',      icon:iconCheck,     section:'Работа' },
+  { id:'payments',  label:'Платежи',     icon:iconCard,      section:'Финансы' },
+  { id:'time',      label:'Время',       icon:iconClock,     section:'Финансы' },
+  { id:'materials', label:'Материалы',   icon:iconBook,      section:'Знания' }
+];
+
+function go(page, id=null){
+  route = { page, id };
+  render();
+  $('#sidebar').classList.remove('open');
+  window.scrollTo(0, 0);
+}
+
+/* =========================================================================
+   ICONS
+   ========================================================================= */
+function iconDashboard(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>'; }
+function iconUsers(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'; }
+function iconMessage(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>'; }
+function iconCalendar(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'; }
+function iconCheck(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'; }
+function iconCard(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>'; }
+function iconClock(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>'; }
+function iconBook(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>'; }
+function iconPlus(){ return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'; }
+function iconArrowLeft(){ return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>'; }
+function iconSearch(){ return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'; }
+function iconEdit(){ return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'; }
+function iconTrash(){ return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>'; }
+function iconCheck2(){ return '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'; }
+
+/* =========================================================================
+   STATUS HELPERS
+   ========================================================================= */
+function statusDot(tone, label){
+  return `<span class="status tone-${tone}"><span class="dot"></span>${esc(label)}</span>`;
+}
+function pill(tone, label){
+  return `<span class="pill tone-${tone}">${esc(label)}</span>`;
+}
+function stageStatus(stageId){
+  const st = STAGE_MAP[stageId];
+  if (!st) return '—';
+  return statusDot(st.tone, st.label);
+}
+function clientStatus(stId){
+  const st = CLIENT_STATUS_MAP[stId];
+  if (!st) return '—';
+  return statusDot(st.tone, st.label);
+}
+function stageLabel(id){ return STAGE_MAP[id] ? STAGE_MAP[id].label : id; }
+function stageBarColor(tone){
+  return { success:'#10B981', danger:'#EF4444', warning:'#F59E0B', info:'#3B82F6', gray:'#9CA3AF' }[tone] || '#171717';
+}
+
+/* =========================================================================
+   RENDER — SHELL
+   ========================================================================= */
+function render(){
+  renderSidebar();
+  renderPage();
+  updateDemoButton();
+}
+
+function renderSidebar(){
+  const container = $('#sidebar-nav');
+  let html = '';
+  let currentSection = null;
+  NAV.forEach(item => {
+    if (item.section !== currentSection){
+      currentSection = item.section;
+      html += `<div class="nav-section">${esc(currentSection)}</div>`;
+    }
+    const active = route.page === item.id ? 'active' : '';
+    let count = '';
+    if (item.id === 'clients') count = state.clients.length;
+    else if (item.id === 'sessions') count = state.sessions.filter(isActiveSession).length;
+    else if (item.id === 'tasks') count = state.tasks.filter(t => !t.done).length;
+    else if (item.id === 'materials') count = state.materials.length;
+    html += `<div class="nav-item ${active}" data-nav="${item.id}">
+      ${item.icon()}
+      <span>${esc(item.label)}</span>
+      ${count !== '' ? `<span class="nav-count">${count}</span>` : ''}
+    </div>`;
+  });
+  container.innerHTML = html;
+  container.querySelectorAll('[data-nav]').forEach(el => {
+    el.addEventListener('click', () => go(el.dataset.nav));
+  });
+}
+
+function setTopbar(title, sub, actionsHTML){
+  $('#page-title').textContent = title;
+  $('#page-sub').textContent = sub || '';
+  $('#topbar-actions').innerHTML = actionsHTML || '';
+}
+
+function updateDemoButton(){
+  const btn = $('#btn-remove-demo');
+  if (hasDemoData()) btn.hidden = false;
+  else btn.hidden = true;
+}
+
+$('#btn-remove-demo').addEventListener('click', () => {
+  confirmModal({
+    title: 'Удалить тестовые данные?',
+    message: 'Все демонстрационные записи (клиенты, занятия, задачи, платежи, время и материалы) будут удалены безвозвратно. Ваши собственные данные не пострадают.',
+    confirmLabel: 'Удалить тестовые данные',
+    onConfirm(){
+      actions.removeDemoData();
+      toast('Тестовые данные удалены');
+      go('dashboard');
+    }
+  });
+});
+
+/* =========================================================================
+   ROUTER
+   ========================================================================= */
+function renderPage(){
+  const root = $('#page-root');
+  switch(route.page){
+    case 'dashboard': return renderDashboard(root);
+    case 'clients':   return route.id ? renderClientDetail(root, route.id) : renderClients(root);
+    case 'sessions':  return route.id ? renderSessionDetail(root, route.id) : renderSessions(root);
+    case 'calendar':  return renderCalendarPage(root);
+    case 'tasks':     return renderTasks(root);
+    case 'payments':  return renderPayments(root);
+    case 'time':      return renderTime(root);
+    case 'materials': return renderMaterials(root);
+    default:          return renderDashboard(root);
+  }
+}
+
+/* =========================================================================
+   DASHBOARD
+   ========================================================================= */
+function renderDashboard(root){
+  setTopbar(
+    'Обзор',
+    'Сводка по клиентам, занятиям и деньгам',
+    `<button class="btn btn-primary" id="dash-add-session">${iconPlus()} Новое занятие</button>`
+  );
+
+  const activeClients = state.clients.filter(c => c.status === 'active').length;
+  const activeSessions = state.sessions.filter(isActiveSession).length;
+  const totalDebt = state.sessions.reduce((s, x) => s + sessionDebt(x), 0);
+
+  const now = new Date();
+  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const receivedMonth = state.payments
+    .filter(p => (p.date || '').startsWith(monthPrefix))
+    .reduce((s, p) => s + (Number(p.amount)||0), 0);
+
+  const overdueTasks = state.tasks.filter(t => !t.done && isOverdue(t.dueDate));
+  const todayTasks = state.tasks.filter(t => !t.done && t.dueDate === todayISO());
+
+  const nowISO = nowLocalISO();
+  const upcoming = state.sessions
+    .filter(s => s.scheduledAt && s.scheduledAt >= nowISO && s.stage !== 'completed')
+    .sort((a,b) => a.scheduledAt.localeCompare(b.scheduledAt))
+    .slice(0, 6);
+
+  const funnel = STAGES.map(st => ({
+    ...st,
+    count: state.sessions.filter(s => s.stage === st.id).length
+  }));
+  const funnelMax = Math.max(1, ...funnel.map(f => f.count));
+
+  root.innerHTML = `
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Активные клиенты</div>
+        <div class="metric-value">${activeClients}</div>
+        <div class="metric-foot">всего в базе: ${state.clients.length}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Активные занятия</div>
+        <div class="metric-value">${activeSessions}</div>
+        <div class="metric-foot">${upcoming.length ? 'ближайшее: ' + relativeDate(upcoming[0].scheduledAt) : 'нет запланированных'}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Получено в этом месяце</div>
+        <div class="metric-value">${formatMoney(receivedMonth)}</div>
+        <div class="metric-foot">${state.payments.length} платежей всего</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">К доплате</div>
+        <div class="metric-value">${formatMoney(totalDebt)}</div>
+        <div class="metric-foot">${totalDebt > 0 ? '<span class="warn">есть задолженности</span>' : 'всё оплачено'}</div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="card mb-16">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Ближайшие занятия</div>
+              <div class="card-sub">по расписанию</div>
+            </div>
+            <span class="card-link" data-nav="calendar">Календарь</span>
+          </div>
+          ${upcoming.length ? upcoming.map(s => upnextHTML(s)).join('') : emptyBlock('Нет запланированных занятий', 'Создайте занятие, чтобы оно появилось здесь')}
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Задачи</div>
+              <div class="card-sub">${todayTasks.length} на сегодня · ${overdueTasks.length} просрочено</div>
+            </div>
+            <span class="card-link" data-nav="tasks">Все задачи</span>
+          </div>
+          ${renderTasksCompact()}
+        </div>
+      </div>
+
+      <div>
+        <div class="card mb-16">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Воронка занятий</div>
+              <div class="card-sub">по этапам</div>
+            </div>
+          </div>
+          ${funnel.map(f => `
+            <div class="funnel-row">
+              <div class="funnel-label" title="${esc(f.label)}">${esc(f.label)}</div>
+              <div class="funnel-bar"><span style="width:${(f.count/funnelMax)*100}%;background:${stageBarColor(f.tone)}"></span></div>
+              <div class="funnel-count">${f.count}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Топ клиентов по обороту</div>
+          </div>
+          ${renderTopClients()}
+        </div>
+      </div>
+    </div>
+  `;
+
+  $('#dash-add-session').addEventListener('click', () => openSessionForm());
+  root.querySelectorAll('[data-nav]').forEach(el => el.addEventListener('click', () => go(el.dataset.nav)));
+  root.querySelectorAll('[data-session-id]').forEach(el => el.addEventListener('click', () => go('sessions', el.dataset.sessionId)));
+  root.querySelectorAll('[data-client-id]').forEach(el => el.addEventListener('click', () => go('clients', el.dataset.clientId)));
+  root.querySelectorAll('[data-task-toggle]').forEach(el => el.addEventListener('click', e => {
+    e.stopPropagation();
+    const t = getTask(el.dataset.taskToggle);
+    if (t){ actions.updateTask(t.id, { done: !t.done }); render(); }
+  }));
+}
+
+function upnextHTML(s){
+  const d = parseDate(s.scheduledAt);
+  const day = d ? String(d.getDate()).padStart(2,'0') : '—';
+  const mon = d ? ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'][d.getMonth()] : '';
+  return `<div class="upnext-item" data-session-id="${s.id}">
+    <div class="upnext-date">
+      <div class="upnext-day">${day}</div>
+      <div class="upnext-mon">${mon}</div>
+    </div>
+    <div class="upnext-main">
+      <div class="upnext-title">${esc(s.title)}</div>
+      <div class="upnext-sub">${esc(clientName(s.clientId))} · ${formatTime(s.scheduledAt)}</div>
+    </div>
+    ${stageStatus(s.stage)}
+  </div>`;
+}
+
+function renderTasksCompact(){
+  const list = state.tasks
+    .filter(t => !t.done)
+    .sort((a,b) => (a.dueDate||'9999').localeCompare(b.dueDate||'9999'))
+    .slice(0, 6);
+  if (!list.length) return emptyBlock('Задач нет', 'Все сделано');
+  return list.map(t => taskRowHTML(t)).join('');
+}
+
+function taskRowHTML(t){
+  const overdue = !t.done && isOverdue(t.dueDate);
+  return `<div class="task-row ${t.done ? 'done' : ''}">
+    <div class="task-check ${t.done ? 'done' : ''}" data-task-toggle="${t.id}">${iconCheck2()}</div>
+    <div class="task-main">
+      <div class="task-title">${esc(t.title)}</div>
+      <div class="task-meta ${overdue ? 'overdue' : ''}">
+        ${t.dueDate ? relativeDate(t.dueDate) : 'без срока'}
+        ${t.clientId ? ' · ' + esc(getClient(t.clientId)?.name || '') : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTopClients(){
+  const totals = state.clients.map(c => ({
+    c,
+    paid: clientPaid(c.id),
+    debt: clientDebt(c.id)
+  })).filter(x => x.paid > 0 || x.debt > 0)
+    .sort((a,b) => (b.paid + b.debt) - (a.paid + a.debt))
+    .slice(0, 5);
+  if (!totals.length) return emptyBlock('Нет данных', 'Появятся после первых платежей');
+  return totals.map(({c, paid, debt}) => `
+    <div class="upnext-item" data-client-id="${c.id}">
+      <div class="upnext-main">
+        <div class="upnext-title">${esc(c.name)}</div>
+        <div class="upnext-sub">${esc(c.company || '—')}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="tnum" style="font-weight:600;letter-spacing:-0.3px">${formatMoney(paid)}</div>
+        ${debt > 0 ? `<div class="sub" style="color:var(--orange-tx);font-weight:500">${formatMoney(debt)} к доплате</div>` : `<div class="sub muted">оплачено</div>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+function emptyBlock(title, sub){
+  return `<div class="empty">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+    <h4>${esc(title)}</h4>
+    <p>${esc(sub || '')}</p>
+  </div>`;
+}
+
+/* =========================================================================
+   CLIENTS
+   ========================================================================= */
+function renderClients(root){
+  setTopbar(
+    'Клиенты',
+    `${state.clients.length} в базе`,
+    `<button class="btn btn-primary" id="btn-add-client">${iconPlus()} Новый клиент</button>`
+  );
+
+  const q = (root._clientQuery || '').toLowerCase();
+  let clients = state.clients.slice();
+  if (q){
+    clients = clients.filter(c =>
+      (c.name||'').toLowerCase().includes(q) ||
+      (c.company||'').toLowerCase().includes(q) ||
+      (c.email||'').toLowerCase().includes(q) ||
+      (c.industry||'').toLowerCase().includes(q)
+    );
+  }
+
+  root.innerHTML = `
+    <div class="toolbar">
+      <div class="search">
+        ${iconSearch()}
+        <input type="text" id="cl-search" placeholder="Поиск по имени, компании, отрасли…" value="${esc(root._clientQuery||'')}">
+      </div>
+      <div class="seg">
+        <button data-cview="table" class="${ui.clientView==='table'?'active':''}">Таблица</button>
+        <button data-cview="cards" class="${ui.clientView==='cards'?'active':''}">Карточки</button>
+      </div>
+    </div>
+    <div id="clients-view"></div>
+  `;
+
+  const view = $('#clients-view');
+  if (ui.clientView === 'cards') view.innerHTML = clientsCardsHTML(clients);
+  else view.innerHTML = clientsTableHTML(clients);
+
+  root.querySelectorAll('[data-cview]').forEach(b => b.addEventListener('click', () => {
+    ui.clientView = b.dataset.cview;
+    renderClients(root);
+  }));
+  const search = $('#cl-search');
+  search.addEventListener('input', () => {
+    root._clientQuery = search.value;
+    const v = search.value;
+    renderClients(root);
+    const ns = $('#cl-search');
+    ns.focus();
+    ns.setSelectionRange(v.length, v.length);
+  });
+
+  root.querySelectorAll('[data-client-id]').forEach(el => el.addEventListener('click', () => {
+    go('clients', el.dataset.clientId);
+  }));
+
+  $('#btn-add-client').addEventListener('click', () => openClientForm());
+}
+
+function clientsTableHTML(clients){
+  if (!clients.length) return `<div class="table-wrap">${emptyBlock('Клиентов пока нет', 'Добавьте первого клиента')}</div>`;
+  return `<div class="table-wrap"><div class="table-scroll">
+    <table class="t">
+      <thead>
+        <tr>
+          <th>Клиент</th>
+          <th>Отрасль</th>
+          <th>Статус</th>
+          <th class="num">Оплачено</th>
+          <th class="num">К доплате</th>
+          <th class="num">Занятий</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${clients.map(c => {
+          const sessions = clientSessions(c.id).length;
+          const paid = clientPaid(c.id);
+          const debt = clientDebt(c.id);
+          return `<tr data-client-id="${c.id}">
+            <td>
+              <div style="font-weight:500">${esc(c.name)}</div>
+              ${c.company ? `<span class="sub">${esc(c.company)}</span>` : ''}
+            </td>
+            <td>${esc(c.industry || '—')}</td>
+            <td>${clientStatus(c.status)}</td>
+            <td class="num">${formatMoney(paid)}</td>
+            <td class="num">${debt > 0 ? `<span style="color:var(--orange-tx);font-weight:500">${formatMoney(debt)}</span>` : '—'}</td>
+            <td class="num">${sessions}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div></div>`;
+}
+
+function clientsCardsHTML(clients){
+  if (!clients.length) return emptyBlock('Клиентов пока нет', 'Добавьте первого клиента');
+  return `<div class="cards-grid">
+    ${clients.map(c => {
+      const paid = clientPaid(c.id);
+      const debt = clientDebt(c.id);
+      const sessions = clientSessions(c.id).length;
+      return `<div class="obj-card" data-client-id="${c.id}">
+        <div class="oc-head">
+          <div>
+            <div class="oc-title">${esc(c.name)}</div>
+            <div class="oc-sub">${esc(c.company || '—')}</div>
+          </div>
+          ${clientStatus(c.status)}
+        </div>
+        <div class="oc-meta">
+          ${c.industry ? `<span>${esc(c.industry)}</span>` : ''}
+          <span>${sessions} занятий</span>
+        </div>
+        <div class="oc-footer">
+          <span class="sub">оплачено</span>
+          <span class="num">${formatMoney(paid)}${debt > 0 ? `<span class="sub" style="color:var(--orange-tx);font-weight:500;margin-left:8px">+${formatMoney(debt)} к доплате</span>` : ''}</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* =========================================================================
+   CLIENT DETAIL
+   ========================================================================= */
+function renderClientDetail(root, id){
+  const c = getClient(id);
+  if (!c){ go('clients'); return; }
+
+  setTopbar('Клиент', c.company || c.name, `
+    <button class="btn btn-ghost" id="cd-edit">${iconEdit()} Редактировать</button>
+    <button class="btn btn-ghost btn-danger" id="cd-delete">${iconTrash()} Удалить</button>
+    <button class="btn btn-primary" id="cd-add-session">${iconPlus()} Занятие</button>
+  `);
+
+  const sessions = clientSessions(id).sort((a,b) => (b.scheduledAt||'').localeCompare(a.scheduledAt||''));
+  const tasks = clientTasks(id);
+  const payments = state.payments.filter(p => p.clientId === id).sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const timeEntries = state.timeEntries.filter(e => e.clientId === id).sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const totalPaid = payments.reduce((s,p) => s + (Number(p.amount)||0), 0);
+  const totalDebt = clientDebt(id);
+  const totalMinutes = timeEntries.reduce((s,e) => s + (Number(e.minutes)||0), 0);
+
+  root.innerHTML = `
+    <div class="back-link" id="back-link">${iconArrowLeft()} Все клиенты</div>
+
+    <div class="detail-head">
+      <div class="detail-title-wrap">
+        <div class="detail-title">${esc(c.name)}</div>
+        <div class="detail-sub">
+          ${c.company ? esc(c.company) + ' · ' : ''}
+          ${clientStatus(c.status)}
+          ${c.industry ? '<span class="mini-tag">' + esc(c.industry) + '</span>' : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Оплачено</div>
+        <div class="metric-value">${formatMoney(totalPaid)}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">К доплате</div>
+        <div class="metric-value" style="${totalDebt>0?'color:var(--orange-tx)':''}">${formatMoney(totalDebt)}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Занятий</div>
+        <div class="metric-value">${sessions.length}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Время</div>
+        <div class="metric-value">${formatHours(totalMinutes)}</div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="card mb-16">
+          <div class="card-head">
+            <div class="card-title">Занятия</div>
+            <span class="card-link" id="cd-add-session-2">+ Создать занятие</span>
+          </div>
+          ${sessions.length ? sessions.map(s => `
+            <div class="upnext-item" data-session-id="${s.id}">
+              <div class="upnext-main">
+                <div class="upnext-title">${esc(s.title)}</div>
+                <div class="upnext-sub">${s.scheduledAt ? formatDateTime(s.scheduledAt) : 'без даты'} · ${formatMoney(s.amount)}</div>
+              </div>
+              ${stageStatus(s.stage)}
+            </div>
+          `).join('') : emptyBlock('Занятий нет', 'Создайте первое занятие')}
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Задачи</div>
+            <span class="card-link" id="cd-add-task">+ Добавить задачу</span>
+          </div>
+          ${tasks.length ? tasks.map(t => taskRowHTML(t)).join('') : emptyBlock('Задач нет', 'Добавьте задачу для клиента')}
+        </div>
+      </div>
+
+      <div>
+        <div class="card mb-16">
+          <div class="card-head">
+            <div class="card-title">Контакты</div>
+          </div>
+          <div class="kv-grid" style="grid-template-columns:1fr">
+            ${c.contactPerson ? `<div class="kv"><div class="kv-label">Контактное лицо</div><div class="kv-value">${esc(c.contactPerson)}</div></div>` : ''}
+            ${c.phone ? `<div class="kv"><div class="kv-label">Телефон</div><div class="kv-value mono">${esc(c.phone)}</div></div>` : ''}
+            ${c.email ? `<div class="kv"><div class="kv-label">Email</div><div class="kv-value mono">${esc(c.email)}</div></div>` : ''}
+            ${c.messenger ? `<div class="kv"><div class="kv-label">Мессенджер</div><div class="kv-value mono">${esc(c.messenger)}</div></div>` : ''}
+            ${c.source ? `<div class="kv"><div class="kv-label">Источник</div><div class="kv-value">${esc(c.source)}</div></div>` : ''}
+          </div>
+        </div>
+
+        ${c.notes ? `<div class="card mb-16">
+          <div class="card-head"><div class="card-title">Заметки</div></div>
+          <div style="font-size:13px;color:#4d4d4d;line-height:1.55;white-space:pre-wrap">${esc(c.notes)}</div>
+        </div>` : ''}
+
+        <div class="card mb-16">
+          <div class="card-head">
+            <div class="card-title">Платежи</div>
+            <span class="card-link" id="cd-add-payment">+ Добавить</span>
+          </div>
+          ${payments.length ? payments.map(p => `
+            <div class="upnext-item" data-payment-id="${p.id}">
+              <div class="upnext-main">
+                <div class="upnext-title">${formatMoney(p.amount)}</div>
+                <div class="upnext-sub">${PAYMENT_TYPE_MAP[p.type]?.label || '—'} · ${formatDate(p.date)}</div>
+              </div>
+            </div>
+          `).join('') : emptyBlock('Платежей нет', 'Добавьте первый платёж')}
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Учёт времени</div>
+            <span class="card-link" id="cd-add-time">+ Добавить</span>
+          </div>
+          ${timeEntries.length ? timeEntries.map(e => `
+            <div class="upnext-item" data-time-id="${e.id}">
+              <div class="upnext-main">
+                <div class="upnext-title">${formatHours(e.minutes)}</div>
+                <div class="upnext-sub">${formatDate(e.date)} · ${esc(e.description || '—')}</div>
+              </div>
+            </div>
+          `).join('') : emptyBlock('Записей нет', 'Учёт времени пуст')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  $('#back-link').addEventListener('click', () => go('clients'));
+  $('#cd-edit').addEventListener('click', () => openClientForm(c));
+  $('#cd-delete').addEventListener('click', () => {
+    confirmModal({
+      title: 'Удалить клиента?',
+      message: `Клиент «${esc(c.name)}» и все его занятия, задачи, платежи и записи времени будут удалены безвозвратно.`,
+      confirmLabel: 'Удалить',
+      onConfirm(){
+        actions.deleteClient(c.id);
+        toast('Клиент удалён');
+        go('clients');
+      }
+    });
+  });
+  const openNew = () => openSessionForm(null, { clientId: c.id });
+  $('#cd-add-session').addEventListener('click', openNew);
+  $('#cd-add-session-2').addEventListener('click', openNew);
+  $('#cd-add-task').addEventListener('click', () => openTaskForm(null, { clientId: c.id }));
+  $('#cd-add-payment').addEventListener('click', () => openPaymentForm(null, { clientId: c.id }));
+  $('#cd-add-time').addEventListener('click', () => openTimeForm(null, { clientId: c.id }));
+
+  root.querySelectorAll('[data-session-id]').forEach(el => el.addEventListener('click', () => go('sessions', el.dataset.sessionId)));
+  root.querySelectorAll('[data-task-toggle]').forEach(el => el.addEventListener('click', e => {
+    e.stopPropagation();
+    const t = getTask(el.dataset.taskToggle);
+    if (t){ actions.updateTask(t.id, { done: !t.done }); render(); }
+  }));
+  root.querySelectorAll('[data-payment-id]').forEach(el => el.addEventListener('click', () => {
+    const p = state.payments.find(x => x.id === el.dataset.paymentId);
+    if (p) openPaymentForm(p);
+  }));
+  root.querySelectorAll('[data-time-id]').forEach(el => el.addEventListener('click', () => {
+    const e2 = state.timeEntries.find(x => x.id === el.dataset.timeId);
+    if (e2) openTimeForm(e2);
+  }));
+}
+
+/* =========================================================================
+   SESSIONS
+   ========================================================================= */
+function renderSessions(root){
+  setTopbar(
+    'Занятия',
+    `${state.sessions.filter(isActiveSession).length} активных · ${state.sessions.length} всего`,
+    `<button class="btn btn-primary" id="btn-add-session">${iconPlus()} Новое занятие</button>`
+  );
+
+  const q = (root._sessionQuery || '').toLowerCase();
+  let sessions = state.sessions.slice();
+  if (q){
+    sessions = sessions.filter(s =>
+      (s.title||'').toLowerCase().includes(q) ||
+      clientName(s.clientId).toLowerCase().includes(q)
+    );
+  }
+
+  root.innerHTML = `
+    <div class="toolbar">
+      <div class="search">
+        ${iconSearch()}
+        <input type="text" id="s-search" placeholder="Поиск по названию или клиенту…" value="${esc(root._sessionQuery||'')}">
+      </div>
+      <div class="seg">
+        <button data-sview="table" class="${ui.sessionView==='table'?'active':''}">Таблица</button>
+        <button data-sview="kanban" class="${ui.sessionView==='kanban'?'active':''}">Kanban</button>
+        <button data-sview="cards" class="${ui.sessionView==='cards'?'active':''}">Карточки</button>
+        <button data-sview="list" class="${ui.sessionView==='list'?'active':''}">Список</button>
+      </div>
+    </div>
+    <div id="sessions-view"></div>
+  `;
+
+  const view = $('#sessions-view');
+  if (ui.sessionView === 'kanban') view.innerHTML = sessionsKanbanHTML(sessions);
+  else if (ui.sessionView === 'cards') view.innerHTML = sessionsCardsHTML(sessions);
+  else if (ui.sessionView === 'list') view.innerHTML = sessionsListHTML(sessions);
+  else view.innerHTML = sessionsTableHTML(sessions);
+
+  root.querySelectorAll('[data-sview]').forEach(b => b.addEventListener('click', () => {
+    ui.sessionView = b.dataset.sview;
+    renderSessions(root);
+  }));
+  const search = $('#s-search');
+  search.addEventListener('input', () => {
+    root._sessionQuery = search.value;
+    const v = search.value;
+    renderSessions(root);
+    const ns = $('#s-search');
+    ns.focus();
+    ns.setSelectionRange(v.length, v.length);
+  });
+
+  root.querySelectorAll('[data-session-id]').forEach(el => el.addEventListener('click', () => {
+    go('sessions', el.dataset.sessionId);
+  }));
+  $('#btn-add-session').addEventListener('click', () => openSessionForm());
+
+  if (ui.sessionView === 'kanban') wireKanban(root);
+}
+
+function sessionsTableHTML(sessions){
+  if (!sessions.length) return `<div class="table-wrap">${emptyBlock('Занятий нет', 'Создайте первое занятие')}</div>`;
+  return `<div class="table-wrap"><div class="table-scroll">
+    <table class="t">
+      <thead>
+        <tr>
+          <th>Занятие</th>
+          <th>Клиент</th>
+          <th>Этап</th>
+          <th>Когда</th>
+          <th class="num">Сумма</th>
+          <th class="num">Оплачено</th>
+          <th class="num">К доплате</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${sessions.map(s => {
+          const paid = sessionPaid(s.id);
+          const debt = sessionDebt(s);
+          return `<tr data-session-id="${s.id}">
+            <td>${esc(s.title)}</td>
+            <td>${esc(clientName(s.clientId))}</td>
+            <td>${stageStatus(s.stage)}</td>
+            <td>${s.scheduledAt ? formatDateTime(s.scheduledAt) : '<span class="muted">—</span>'}</td>
+            <td class="num">${formatMoney(s.amount)}</td>
+            <td class="num">${formatMoney(paid)}</td>
+            <td class="num">${debt > 0 ? `<span style="color:var(--orange-tx);font-weight:500">${formatMoney(debt)}</span>` : '—'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div></div>`;
+}
+
+function sessionsCardsHTML(sessions){
+  if (!sessions.length) return emptyBlock('Занятий нет', 'Создайте первое занятие');
+  return `<div class="cards-grid">
+    ${sessions.map(s => {
+      const paid = sessionPaid(s.id);
+      const debt = sessionDebt(s);
+      return `<div class="obj-card" data-session-id="${s.id}">
+        <div class="oc-head">
+          <div>
+            <div class="oc-title">${esc(s.title)}</div>
+            <div class="oc-sub">${esc(clientName(s.clientId))}</div>
+          </div>
+          ${stageStatus(s.stage)}
+        </div>
+        <div class="oc-meta">
+          ${s.scheduledAt ? `<span>${formatDateTime(s.scheduledAt)}</span>` : '<span class="muted">без даты</span>'}
+        </div>
+        <div class="oc-footer">
+          <span class="num">${formatMoney(s.amount)}</span>
+          ${debt > 0 ? `<span class="sub" style="color:var(--orange-tx);font-weight:500">${formatMoney(debt)} к доплате</span>` : (paid > 0 ? `<span class="sub" style="color:var(--green-tx);font-weight:500">оплачено</span>` : '')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function sessionsListHTML(sessions){
+  if (!sessions.length) return emptyBlock('Занятий нет', 'Создайте первое занятие');
+  return `<div class="list">
+    ${sessions.map(s => {
+      const debt = sessionDebt(s);
+      return `<div class="list-row" data-session-id="${s.id}">
+        <div class="lr-main">
+          <div class="lr-title">${esc(s.title)}</div>
+          <div class="lr-sub">${esc(clientName(s.clientId))} · ${s.scheduledAt ? formatDateTime(s.scheduledAt) : 'без даты'}</div>
+        </div>
+        ${stageStatus(s.stage)}
+        <div class="lr-amt">${formatMoney(s.amount)}</div>
+        ${debt > 0 ? `<div class="lr-amt" style="color:var(--orange-tx)">${formatMoney(debt)}</div>` : '<div class="lr-amt muted">—</div>'}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function sessionsKanbanHTML(sessions){
+  if (!sessions.length){
+    return `<div class="empty"><h4>Занятий нет</h4><p>Создайте первое занятие</p></div>`;
+  }
+  const byStage = {};
+  STAGES.forEach(s => byStage[s.id] = []);
+  sessions.forEach(s => { (byStage[s.stage] || byStage['new']).push(s); });
+
+  return `<div class="kanban">
+    ${STAGES.map(st => `
+      <div class="kanban-col" data-stage="${st.id}">
+        <div class="kanban-col-head">
+          <div class="kanban-col-title">
+            <span class="dot" style="background:${stageBarColor(st.tone)}"></span>
+            ${esc(st.label)}
+          </div>
+          <span class="kanban-count">${byStage[st.id].length}</span>
+        </div>
+        ${byStage[st.id].length ? byStage[st.id].map(s => `
+          <div class="kanban-card" draggable="true" data-session-id="${s.id}" data-stage-id="${st.id}">
+            <div class="kc-title">${esc(s.title)}</div>
+            <div class="kc-client">${esc(clientName(s.clientId))}</div>
+            <div class="kc-meta">
+              <span class="kc-date">${s.scheduledAt ? formatDate(s.scheduledAt) : '—'}</span>
+              <span class="tnum">${formatMoney(s.amount)}</span>
+            </div>
+          </div>
+        `).join('') : `<div class="kanban-empty">Пусто</div>`}
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function wireKanban(root){
+  root.querySelectorAll('.kanban-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', card.dataset.sessionId);
+      e.dataTransfer.effectAllowed = 'move';
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+  });
+  root.querySelectorAll('.kanban-col').forEach(col => {
+    col.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      col.classList.add('drag-over');
+    });
+    col.addEventListener('dragleave', e => {
+      if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+    });
+    col.addEventListener('drop', e => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      const id = e.dataTransfer.getData('text/plain');
+      const stage = col.dataset.stage;
+      const s = getSession(id);
+      if (!s || s.stage === stage) return;
+      actions.updateSession(id, { stage });
+      toast('Этап обновлён: ' + stageLabel(stage));
+      render();
+    });
+  });
+}
+
+/* =========================================================================
+   SESSION DETAIL
+   ========================================================================= */
+function renderSessionDetail(root, id){
+  const s = getSession(id);
+  if (!s){ go('sessions'); return; }
+  const c = getClient(s.clientId);
+
+  setTopbar('Занятие', s.title, `
+    <button class="btn btn-ghost" id="sd-edit">${iconEdit()} Редактировать</button>
+    <button class="btn btn-ghost btn-danger" id="sd-delete">${iconTrash()} Удалить</button>
+  `);
+
+  const paid = sessionPaid(s.id);
+  const debt = sessionDebt(s);
+  const timeMin = sessionTime(s.id);
+  const payments = state.payments.filter(p => p.sessionId === s.id).sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const tasks = state.tasks.filter(t => t.sessionId === s.id);
+  const timeEntries = state.timeEntries.filter(e => e.sessionId === s.id).sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const stageIdx = STAGES.findIndex(x => x.id === s.stage);
+
+  root.innerHTML = `
+    <div class="back-link" id="back-link">${iconArrowLeft()} Все занятия</div>
+
+    <div class="detail-head">
+      <div class="detail-title-wrap">
+        <div class="detail-title">${esc(s.title)}</div>
+        <div class="detail-sub">
+          <span class="link" id="to-client">${esc(clientName(s.clientId))}</span>
+          ${c && c.industry ? '<span class="mini-tag">' + esc(c.industry) + '</span>' : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-flow">
+      ${STAGES.map((st, i) => `
+        <span class="stage-chip ${i === stageIdx ? 'active' : (i < stageIdx ? 'done' : '')}" data-stage-pick="${st.id}">
+          ${esc(st.label)}
+        </span>
+      `).join('')}
+    </div>
+
+    <div class="metrics" style="margin-top:16px">
+      <div class="metric">
+        <div class="metric-label">Сумма</div>
+        <div class="metric-value">${formatMoney(s.amount)}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Оплачено</div>
+        <div class="metric-value" style="color:var(--green-tx)">${formatMoney(paid)}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">К доплате</div>
+        <div class="metric-value" style="${debt>0?'color:var(--orange-tx)':''}">${formatMoney(debt)}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Время</div>
+        <div class="metric-value">${formatHours(timeMin)}</div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="card mb-16">
+          <div class="card-head"><div class="card-title">Информация</div></div>
+          <div class="kv-grid">
+            <div class="kv"><div class="kv-label">Когда</div><div class="kv-value">${s.scheduledAt ? formatDateTime(s.scheduledAt) : '<span class="muted">—</span>'}</div></div>
+            <div class="kv"><div class="kv-label">Длительность</div><div class="kv-value">${s.durationMin ? s.durationMin + ' мин' : '—'}</div></div>
+            <div class="kv"><div class="kv-label">Ставка</div><div class="kv-value">${s.hourlyRate ? formatMoney(s.hourlyRate) + '/час' : '—'}</div></div>
+            <div class="kv"><div class="kv-label">Создано</div><div class="kv-value">${formatDate(s.createdAt)}</div></div>
+          </div>
+          ${s.description ? `<div class="divider"></div><div style="font-size:13px;color:#4d4d4d;line-height:1.55;white-space:pre-wrap">${esc(s.description)}</div>` : ''}
+          ${s.notes ? `<div class="divider"></div><div class="kv"><div class="kv-label">Заметки</div><div class="kv-value" style="white-space:pre-wrap">${esc(s.notes)}</div></div>` : ''}
+        </div>
+
+        <div class="card mb-16">
+          <div class="card-head">
+            <div class="card-title">Задачи по занятию</div>
+            <span class="card-link" id="sd-add-task">+ Добавить</span>
+          </div>
+          ${tasks.length ? tasks.map(t => taskRowHTML(t)).join('') : emptyBlock('Задач нет', 'Добавьте задачу')}
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Учёт времени</div>
+            <span class="card-link" id="sd-add-time">+ Добавить</span>
+          </div>
+          ${timeEntries.length ? timeEntries.map(e => `
+            <div class="upnext-item" data-time-id="${e.id}">
+              <div class="upnext-main">
+                <div class="upnext-title">${formatHours(e.minutes)}</div>
+                <div class="upnext-sub">${formatDate(e.date)} · ${esc(e.description || '—')}</div>
+              </div>
+            </div>
+          `).join('') : emptyBlock('Записей нет', 'Добавьте запись времени')}
+        </div>
+      </div>
+
+      <div>
+        <div class="card mb-16">
+          <div class="card-head">
+            <div class="card-title">Платежи</div>
+            <span class="card-link" id="sd-add-payment">+ Добавить</span>
+          </div>
+          ${payments.length ? payments.map(p => `
+            <div class="upnext-item" data-payment-id="${p.id}">
+              <div class="upnext-main">
+                <div class="upnext-title">${formatMoney(p.amount)}</div>
+                <div class="upnext-sub">${PAYMENT_TYPE_MAP[p.type]?.label || '—'} · ${formatDate(p.date)}</div>
+              </div>
+            </div>
+          `).join('') : emptyBlock('Платежей нет', 'Добавьте платёж')}
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div class="card-title">Быстрые действия</div></div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn btn-ghost btn-block" id="qa-next">Запланировать следующее занятие</button>
+            <button class="btn btn-ghost btn-block" id="qa-complete">Отметить как завершённое</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  $('#back-link').addEventListener('click', () => go('sessions'));
+  $('#to-client').addEventListener('click', () => { if (s.clientId) go('clients', s.clientId); });
+  $('#sd-edit').addEventListener('click', () => openSessionForm(s));
+  $('#sd-delete').addEventListener('click', () => {
+    confirmModal({
+      title: 'Удалить занятие?',
+      message: `Занятие «${esc(s.title)}», связанные платежи, задачи и записи времени будут удалены.`,
+      confirmLabel: 'Удалить',
+      onConfirm(){
+        actions.deleteSession(s.id);
+        toast('Занятие удалено');
+        go('sessions');
+      }
+    });
+  });
+  root.querySelectorAll('[data-stage-pick]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      actions.updateSession(s.id, { stage: chip.dataset.stagePick });
+      toast('Этап обновлён');
+      render();
+    });
+  });
+  $('#sd-add-task').addEventListener('click', () => openTaskForm(null, { clientId: s.clientId, sessionId: s.id }));
+  $('#sd-add-payment').addEventListener('click', () => openPaymentForm(null, { clientId: s.clientId, sessionId: s.id, amount: Math.max(0, debt) }));
+  $('#sd-add-time').addEventListener('click', () => openTimeForm(null, { clientId: s.clientId, sessionId: s.id }));
+  $('#qa-complete').addEventListener('click', () => {
+    actions.updateSession(s.id, { stage: 'completed' });
+    toast('Занятие завершено');
+    render();
+  });
+  $('#qa-next').addEventListener('click', () => {
+    openSessionForm(null, { clientId: s.clientId, title: s.title });
+  });
+
+  root.querySelectorAll('[data-payment-id]').forEach(el => el.addEventListener('click', () => {
+    const p = state.payments.find(x => x.id === el.dataset.paymentId);
+    if (p) openPaymentForm(p);
+  }));
+  root.querySelectorAll('[data-time-id]').forEach(el => el.addEventListener('click', () => {
+    const e2 = state.timeEntries.find(x => x.id === el.dataset.timeId);
+    if (e2) openTimeForm(e2);
+  }));
+  root.querySelectorAll('[data-task-toggle]').forEach(el => el.addEventListener('click', e => {
+    e.stopPropagation();
+    const t = getTask(el.dataset.taskToggle);
+    if (t){ actions.updateTask(t.id, { done: !t.done }); render(); }
+  }));
+}
+
+/* =========================================================================
+   CALENDAR
+   ========================================================================= */
+function renderCalendarPage(root){
+  setTopbar(
+    'Календарь',
+    'Занятия, задачи и платежи',
+    `<button class="btn btn-primary" id="cal-add">${iconPlus()} Новое занятие</button>`
+  );
+
+  const cursor = ui.calendarCursor;
+  root.innerHTML = `
+    <div class="toolbar">
+      <div class="seg">
+        <button data-cmode="month" class="${ui.calendarMode==='month'?'active':''}">Месяц</button>
+        <button data-cmode="week" class="${ui.calendarMode==='week'?'active':''}">Неделя</button>
+        <button data-cmode="list" class="${ui.calendarMode==='list'?'active':''}">Список</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost btn-sm" id="cal-prev">←</button>
+      <button class="btn btn-ghost btn-sm" id="cal-today">Сегодня</button>
+      <button class="btn btn-ghost btn-sm" id="cal-next">→</button>
+    </div>
+    <div id="cal-view"></div>
+  `;
+
+  const view = $('#cal-view');
+  if (ui.calendarMode === 'month') view.innerHTML = calendarMonthHTML(cursor);
+  else if (ui.calendarMode === 'week') view.innerHTML = calendarWeekHTML(cursor);
+  else view.innerHTML = calendarListHTML();
+
+  root.querySelectorAll('[data-cmode]').forEach(b => b.addEventListener('click', () => {
+    ui.calendarMode = b.dataset.cmode;
+    renderCalendarPage(root);
+  }));
+  $('#cal-prev').addEventListener('click', () => {
+    if (ui.calendarMode === 'week') ui.calendarCursor = addDays(ui.calendarCursor, -7);
+    else ui.calendarCursor = addMonths(ui.calendarCursor, -1);
+    renderCalendarPage(root);
+  });
+  $('#cal-next').addEventListener('click', () => {
+    if (ui.calendarMode === 'week') ui.calendarCursor = addDays(ui.calendarCursor, 7);
+    else ui.calendarCursor = addMonths(ui.calendarCursor, 1);
+    renderCalendarPage(root);
+  });
+  $('#cal-today').addEventListener('click', () => {
+    ui.calendarCursor = new Date();
+    renderCalendarPage(root);
+  });
+  $('#cal-add').addEventListener('click', () => openSessionForm());
+
+  root.querySelectorAll('.cal-ev[data-session-id], .week-head-cell[data-day], .cal-cell[data-day]').forEach(el => {
+    if (el.dataset.sessionId){
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        go('sessions', el.dataset.sessionId);
+      });
+    } else if (el.dataset.day){
+      el.addEventListener('click', e => {
+        // if click inside a cal-ev, don't open day modal
+        if (e.target.closest('.cal-ev[data-session-id]')) return;
+        openDayModal(el.dataset.day);
+      });
+    }
+  });
+}
+
+function eventsByDate(){
+  const map = {};
+  state.sessions.forEach(s => {
+    if (!s.scheduledAt) return;
+    const d = s.scheduledAt.slice(0,10);
+    (map[d] = map[d] || []).push({ kind:'session', time: s.scheduledAt.slice(11,16), title: s.title, sessionId: s.id });
+  });
+  state.tasks.forEach(t => {
+    if (!t.dueDate) return;
+    (map[t.dueDate] = map[t.dueDate] || []).push({ kind:'task', title: t.title, done: t.done });
+  });
+  state.payments.forEach(p => {
+    if (!p.date) return;
+    (map[p.date] = map[p.date] || []).push({ kind:'payment', title: formatMoney(p.amount), amount: p.amount });
+  });
+  return map;
+}
+
+function calendarMonthHTML(cursor){
+  const year = cursor.getFullYear();
+  const month = cursor.getMonth();
+  const first = new Date(year, month, 1);
+  const startOffset = (first.getDay() + 6) % 7;
+  const start = new Date(year, month, 1 - startOffset);
+  const days = [];
+  for (let i = 0; i < 42; i++) days.push(addDays(start, i));
+
+  const monthName = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][month];
+  const events = eventsByDate();
+  const todayStr = todayISO();
+
+  return `
+    <div class="calendar">
+      <div class="cal-head">
+        <div class="cal-title">${monthName} ${year}</div>
+      </div>
+      <div class="cal-grid">
+        ${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(n => `<div class="cal-day-name">${n}</div>`).join('')}
+        ${days.map(d => {
+          const iso = toISODateOnly(d);
+          const out = d.getMonth() !== month;
+          const evs = events[iso] || [];
+          const isToday = iso === todayStr;
+          const shown = evs.slice(0, 3);
+          return `<div class="cal-cell ${out?'out':''} ${isToday?'today':''}" data-day="${iso}">
+            <div class="cal-num">${d.getDate()}</div>
+            ${shown.map(e => {
+              const cls = e.kind === 'session' ? 'session' : (e.kind === 'task' ? 'task' : 'payment');
+              const label = e.kind === 'session' ? (e.time ? e.time + ' ' : '') + e.title : e.title;
+              return `<div class="cal-ev ${cls}" ${e.sessionId?`data-session-id="${e.sessionId}"`:''}>${esc(label)}</div>`;
+            }).join('')}
+            ${evs.length > 3 ? `<div class="cal-more">+${evs.length - 3}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function calendarWeekHTML(cursor){
+  const start = addDays(cursor, -((cursor.getDay() + 6) % 7));
+  const days = []; for (let i = 0; i < 7; i++) days.push(addDays(start, i));
+  const events = eventsByDate();
+  const todayStr = todayISO();
+
+  return `
+    <div class="calendar">
+      <div class="week-head">
+        ${days.map(d => {
+          const iso = toISODateOnly(d);
+          const wd = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'][(d.getDay()+6)%7];
+          return `<div class="week-head-cell ${iso===todayStr?'today':''}" data-day="${iso}">${wd}<span class="num">${d.getDate()}</span></div>`;
+        }).join('')}
+      </div>
+      <div class="week-grid cal-week">
+        ${days.map(d => {
+          const iso = toISODateOnly(d);
+          const evs = events[iso] || [];
+          return `<div class="cal-cell" data-day="${iso}">
+            ${evs.map(e => {
+              const cls = e.kind === 'session' ? 'session' : (e.kind === 'task' ? 'task' : 'payment');
+              const label = e.kind === 'session' ? (e.time ? e.time + ' ' : '') + e.title : e.title;
+              return `<div class="cal-ev ${cls}" ${e.sessionId?`data-session-id="${e.sessionId}"`:''}>${esc(label)}</div>`;
+            }).join('')}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function calendarListHTML(){
+  const now = new Date(); now.setHours(0,0,0,0);
+  const list = [];
+  state.sessions.forEach(s => {
+    if (s.scheduledAt && parseDate(s.scheduledAt) >= now) list.push({ when: s.scheduledAt, kind:'session', s });
+  });
+  state.tasks.forEach(t => {
+    if (t.dueDate && !t.done && parseDate(t.dueDate) >= now) list.push({ when: t.dueDate, kind:'task', t });
+  });
+  list.sort((a,b) => a.when.localeCompare(b.when));
+  if (!list.length) return emptyBlock('Ничего не запланировано', 'Добавьте занятие или задачу');
+  return `<div class="list">
+    ${list.map(item => {
+      if (item.kind === 'session'){
+        const s = item.s;
+        return `<div class="list-row" data-session-id="${s.id}">
+          <div class="lr-main">
+            <div class="lr-title">${esc(s.title)}</div>
+            <div class="lr-sub">${esc(clientName(s.clientId))}</div>
+          </div>
+          <div class="lr-amt">${formatDateTime(s.scheduledAt)}</div>
+          ${stageStatus(s.stage)}
+        </div>`;
+      } else {
+        const t = item.t;
+        return `<div class="list-row">
+          <div class="lr-main">
+            <div class="lr-title">${esc(t.title)}</div>
+            <div class="lr-sub">${t.clientId ? esc(getClient(t.clientId)?.name || '') : 'Задача'}</div>
+          </div>
+          <div class="lr-amt">${formatDate(t.dueDate)}</div>
+        </div>`;
+      }
+    }).join('')}
+  </div>`;
+}
+
+function openDayModal(iso){
+  const events = eventsByDate()[iso] || [];
+  openModal({
+    title: 'События · ' + formatDate(iso),
+    size: 'modal-sm',
+    bodyHTML: events.length ? events.map(e => {
+      const cls = e.kind === 'session' ? 'session' : (e.kind === 'task' ? 'task' : 'payment');
+      const label = e.kind === 'session' ? (e.time ? e.time + ' ' : '') + e.title : e.title;
+      return `<div class="cal-ev ${cls}" style="font-size:13px;padding:6px 10px;margin-bottom:6px" ${e.sessionId?`data-session-id="${e.sessionId}"`:''}>${esc(label)}</div>`;
+    }).join('') : '<div class="sub">Ничего не запланировано</div>',
+    footerHTML: `<button type="button" class="btn btn-ghost" data-close>Закрыть</button>`,
+    onMount(overlay, instance){
+      overlay.querySelectorAll('[data-session-id]').forEach(el => el.addEventListener('click', () => {
+        instance.close();
+        go('sessions', el.dataset.sessionId);
+      }));
+    }
+  });
+}
+
+/* =========================================================================
+   TASKS
+   ========================================================================= */
+function renderTasks(root){
+  setTopbar(
+    'Задачи',
+    `${state.tasks.filter(t=>!t.done).length} активных`,
+    `<button class="btn btn-primary" id="btn-add-task">${iconPlus()} Новая задача</button>`
+  );
+
+  const filter = root._taskFilter || 'active';
+  let tasks = state.tasks.slice();
+  if (filter === 'active') tasks = tasks.filter(t => !t.done);
+  else if (filter === 'done') tasks = tasks.filter(t => t.done);
+  else if (filter === 'overdue') tasks = tasks.filter(t => !t.done && isOverdue(t.dueDate));
+  tasks.sort((a,b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return (a.dueDate||'9999').localeCompare(b.dueDate||'9999');
+  });
+
+  root.innerHTML = `
+    <div class="toolbar">
+      <div class="seg">
+        <button data-tf="active" class="${filter==='active'?'active':''}">Активные</button>
+        <button data-tf="overdue" class="${filter==='overdue'?'active':''}">Просроченные</button>
+        <button data-tf="done" class="${filter==='done'?'active':''}">Выполненные</button>
+        <button data-tf="all" class="${filter==='all'?'active':''}">Все</button>
+      </div>
+    </div>
+    <div class="card">
+      ${tasks.length ? tasks.map(t => taskFullHTML(t)).join('') : emptyBlock('Задач нет', 'Всё выполнено')}
+    </div>
+  `;
+
+  root.querySelectorAll('[data-tf]').forEach(b => b.addEventListener('click', () => {
+    root._taskFilter = b.dataset.tf;
+    renderTasks(root);
+  }));
+  $('#btn-add-task').addEventListener('click', () => openTaskForm());
+  root.querySelectorAll('[data-task-toggle]').forEach(el => el.addEventListener('click', e => {
+    e.stopPropagation();
+    const t = getTask(el.dataset.taskToggle);
+    if (t){ actions.updateTask(t.id, { done: !t.done }); render(); }
+  }));
+  root.querySelectorAll('[data-task-open]').forEach(el => el.addEventListener('click', e => {
+    if (e.target.closest('[data-task-toggle]')) return;
+    const t = getTask(el.dataset.taskOpen);
+    if (t) openTaskForm(t);
+  }));
+}
+
+function taskFullHTML(t){
+  const overdue = !t.done && isOverdue(t.dueDate);
+  return `<div class="task-row" data-task-open="${t.id}" style="cursor:pointer">
+    <div class="task-check ${t.done ? 'done' : ''}" data-task-toggle="${t.id}">${iconCheck2()}</div>
+    <div class="task-main">
+      <div class="task-title">${esc(t.title)}</div>
+      <div class="task-meta ${overdue ? 'overdue' : ''}">
+        ${t.dueDate ? relativeDate(t.dueDate) : 'без срока'}
+        ${t.clientId ? ' · ' + esc(getClient(t.clientId)?.name || '') : ''}
+        ${t.sessionId ? ' · ' + esc(getSession(t.sessionId)?.title || '') : ''}
+      </div>
+    </div>
+    ${t.priority === 'high' ? '<span class="pill tone-danger">Важно</span>' : ''}
+  </div>`;
+}
+
+/* =========================================================================
+   PAYMENTS
+   ========================================================================= */
+function renderPayments(root){
+  const total = state.payments.reduce((s,p) => s + (Number(p.amount)||0), 0);
+  const debt = state.sessions.reduce((s,s2) => s + sessionDebt(s2), 0);
+
+  setTopbar(
+    'Платежи',
+    `${formatMoney(total)} всего · ${formatMoney(debt)} к доплате`,
+    `<button class="btn btn-primary" id="btn-add-payment">${iconPlus()} Платёж</button>`
+  );
+
+  const list = state.payments.slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  root.innerHTML = `
+    <div class="table-wrap"><div class="table-scroll">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Клиент</th>
+            <th>Занятие</th>
+            <th>Тип</th>
+            <th class="num">Сумма</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.length ? list.map(p => `
+            <tr data-payment-id="${p.id}">
+              <td class="mono" style="font-size:12px">${formatDate(p.date)}</td>
+              <td>${esc(clientName(p.clientId))}</td>
+              <td>${esc(getSession(p.sessionId)?.title || '—')}</td>
+              <td>${PAYMENT_TYPE_MAP[p.type]?.label || '—'}</td>
+              <td class="num" style="font-weight:600">${formatMoney(p.amount)}</td>
+              <td style="width:1%" class="no-row-open">
+                <button class="btn-icon" data-pay-edit="${p.id}" title="Редактировать">${iconEdit()}</button>
+                <button class="btn-icon" data-pay-del="${p.id}" title="Удалить">${iconTrash()}</button>
+              </td>
+            </tr>
+          `).join('') : `<tr><td colspan="6">${emptyBlock('Платежей нет', 'Добавьте первый платёж')}</td></tr>`}
+        </tbody>
+      </table>
+    </div></div>
+  `;
+
+  $('#btn-add-payment').addEventListener('click', () => openPaymentForm());
+  root.querySelectorAll('[data-payment-id]').forEach(tr => tr.addEventListener('click', e => {
+    if (e.target.closest('.no-row-open')) return;
+    const p = state.payments.find(x => x.id === tr.dataset.paymentId);
+    if (p) openPaymentForm(p);
+  }));
+  root.querySelectorAll('[data-pay-edit]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const p = state.payments.find(x => x.id === b.dataset.payEdit);
+    if (p) openPaymentForm(p);
+  }));
+  root.querySelectorAll('[data-pay-del]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const p = state.payments.find(x => x.id === b.dataset.payDel);
+    if (!p) return;
+    confirmModal({
+      title: 'Удалить платёж?',
+      message: `${formatMoney(p.amount)} от ${formatDate(p.date)} будет удалён.`,
+      onConfirm(){ actions.deletePayment(p.id); toast('Платёж удалён'); render(); }
+    });
+  }));
+}
+
+/* =========================================================================
+   TIME
+   ========================================================================= */
+function renderTime(root){
+  const total = state.timeEntries.reduce((s,e) => s + (Number(e.minutes)||0), 0);
+  setTopbar(
+    'Учёт времени',
+    `${formatHours(total)} всего`,
+    `<button class="btn btn-primary" id="btn-add-time">${iconPlus()} Запись</button>`
+  );
+
+  const list = state.timeEntries.slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  root.innerHTML = `
+    <div class="table-wrap"><div class="table-scroll">
+      <table class="t">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Клиент</th>
+            <th>Занятие</th>
+            <th>Описание</th>
+            <th class="num">Время</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.length ? list.map(e => `
+            <tr data-time-id="${e.id}">
+              <td class="mono" style="font-size:12px">${formatDate(e.date)}</td>
+              <td>${esc(clientName(e.clientId))}</td>
+              <td>${esc(getSession(e.sessionId)?.title || '—')}</td>
+              <td>${esc(e.description || '—')}</td>
+              <td class="num" style="font-weight:600">${formatHours(e.minutes)}</td>
+              <td style="width:1%" class="no-row-open">
+                <button class="btn-icon" data-time-edit="${e.id}">${iconEdit()}</button>
+                <button class="btn-icon" data-time-del="${e.id}">${iconTrash()}</button>
+              </td>
+            </tr>
+          `).join('') : `<tr><td colspan="6">${emptyBlock('Записей нет', 'Добавьте первую запись')}</td></tr>`}
+        </tbody>
+      </table>
+    </div></div>
+  `;
+
+  $('#btn-add-time').addEventListener('click', () => openTimeForm());
+  root.querySelectorAll('[data-time-id]').forEach(tr => tr.addEventListener('click', e => {
+    if (e.target.closest('.no-row-open')) return;
+    const e2 = state.timeEntries.find(x => x.id === tr.dataset.timeId);
+    if (e2) openTimeForm(e2);
+  }));
+  root.querySelectorAll('[data-time-edit]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const e2 = state.timeEntries.find(x => x.id === b.dataset.timeEdit);
+    if (e2) openTimeForm(e2);
+  }));
+  root.querySelectorAll('[data-time-del]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const e2 = state.timeEntries.find(x => x.id === b.dataset.timeDel);
+    if (!e2) return;
+    confirmModal({
+      title: 'Удалить запись?',
+      message: `${formatHours(e2.minutes)} от ${formatDate(e2.date)} будет удалено.`,
+      onConfirm(){ actions.deleteTimeEntry(e2.id); toast('Запись удалена'); render(); }
+    });
+  }));
+}
+
+/* =========================================================================
+   MATERIALS
+   ========================================================================= */
+function renderMaterials(root){
+  setTopbar(
+    'Материалы',
+    `${state.materials.length} материалов`,
+    `<button class="btn btn-primary" id="btn-add-material">${iconPlus()} Материал</button>`
+  );
+
+  root.innerHTML = state.materials.length
+    ? `<div class="cards-grid">${state.materials.map(m => `
+        <div class="obj-card" data-material-id="${m.id}">
+          <div class="oc-title">${esc(m.title)}</div>
+          ${m.description ? `<div class="oc-sub">${esc(m.description)}</div>` : ''}
+          ${(m.tags||[]).length ? `<div class="chip-row">${m.tags.map(t => `<span class="mini-tag">${esc(t)}</span>`).join('')}</div>` : ''}
+          <div class="oc-footer">
+            ${m.url ? `<a class="link" href="${esc(m.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Открыть</a>` : '<span class="sub muted">без ссылки</span>'}
+            <span class="sub">${formatDate(m.createdAt)}</span>
+          </div>
+        </div>
+      `).join('')}</div>`
+    : emptyBlock('Материалов нет', 'Добавьте первый материал');
+
+  $('#btn-add-material').addEventListener('click', () => openMaterialForm());
+  root.querySelectorAll('[data-material-id]').forEach(el => el.addEventListener('click', () => {
+    const m = getMaterial(el.dataset.materialId);
+    if (m) openMaterialForm(m);
+  }));
+}
+
+/* =========================================================================
+   FORMS
+   ========================================================================= */
+function clientFields(){
+  return [
+    { name:'name',     label:'Имя / название', type:'text', required:true, placeholder:'Иван Соколов' },
+    { name:'company',  label:'Компания',       type:'text', placeholder:'ООО «Ромашка»' },
+    { name:'contactPerson', label:'Контактное лицо', type:'text' },
+    { name:'phone',    label:'Телефон',        type:'text', placeholder:'+7 …' },
+    { name:'email',    label:'Email',          type:'text', placeholder:'name@example.com' },
+    { name:'messenger',label:'Мессенджер',     type:'text', placeholder:'@username' },
+    { name:'industry', label:'Отрасль',        type:'text', placeholder:'Ритейл, юристы, …' },
+    { name:'status',   label:'Статус',         type:'select',
+      options: CLIENT_STATUS.map(s => ({ value:s.id, label:s.label })), default:'active' },
+    { name:'source',   label:'Источник',       type:'text', placeholder:'Рекомендация, сайт, Telegram' },
+    { name:'notes',    label:'Заметки',        type:'textarea', rows:4 }
+  ];
+}
+
+function openClientForm(existing){
+  openModal({
+    title: existing ? 'Редактировать клиента' : 'Новый клиент',
+    bodyHTML: formFieldsHTML(clientFields(), existing || { status:'active' }),
+    onSubmit(values){
+      if (!String(values.name || '').trim()){ toast('Укажите имя клиента', 'error'); return false; }
+      if (existing){ actions.updateClient(existing.id, values); toast('Клиент обновлён'); }
+      else { actions.addClient(values); toast('Клиент создан'); }
+      render();
+    }
+  });
+}
+
+function sessionFields(){
+  const clientOptions = state.clients.map(c => ({ value:c.id, label: c.company ? c.name + ' · ' + c.company : c.name }));
+  return [
+    { name:'title', label:'Тема / название', type:'text', required:true, placeholder:'Внедрение AI-ассистента' },
+    { name:'clientId', label:'Клиент', type:'select', options: clientOptions, placeholder:'Выберите клиента',
+      creatable: {
+        modalTitle:'Новый клиент',
+        submitLabel:'Создать',
+        fields: [
+          { name:'name', label:'Имя', type:'text', required:true },
+          { name:'company', label:'Компания', type:'text' },
+          { name:'phone', label:'Телефон', type:'text' },
+          { name:'email', label:'Email', type:'text' },
+          { name:'industry', label:'Отрасль', type:'text' },
+          { name:'status', label:'Статус', type:'select', options: CLIENT_STATUS.map(s => ({ value:s.id, label:s.label })), default:'lead' }
+        ],
+        create: (v) => actions.addClient(v),
+        getLabel: (c) => c.company ? c.name + ' · ' + c.company : c.name,
+        toast: 'Клиент создан'
+      }
+    },
+    { name:'stage', label:'Этап', type:'select', options: STAGES.map(s => ({ value:s.id, label:s.label })), default:'new' },
+    { name:'scheduledAt', label:'Дата и время', type:'datetime-local' },
+    { name:'durationMin', label:'Длительность, мин', type:'number', min:0, step:15, placeholder:'60' },
+    { name:'hourlyRate', label:'Ставка, ₽/час', type:'number', min:0, step:500, placeholder:'8000' },
+    { name:'amount', label:'Итоговая сумма, ₽', type:'number', min:0, step:100, placeholder:'24000' },
+    { name:'description', label:'Описание задачи', type:'textarea', rows:3 },
+    { name:'notes', label:'Заметки', type:'textarea', rows:3 }
+  ];
+}
+
+function openSessionForm(existing, prefill){
+  const values = existing ? {...existing} : { stage:'new', ...(prefill||{}) };
+  openModal({
+    title: existing ? 'Редактировать занятие' : 'Новое занятие',
+    size: 'modal-lg',
+    bodyHTML: formFieldsHTML(sessionFields(), values),
+    onSubmit(v){
+      if (!String(v.title || '').trim()){ toast('Укажите тему занятия', 'error'); return false; }
+      if (existing){ actions.updateSession(existing.id, v); toast('Занятие обновлено'); }
+      else { actions.addSession(v); toast('Занятие создано'); }
+      render();
+    }
+  });
+}
+
+function taskFields(){
+  const clientOptions = state.clients.map(c => ({ value:c.id, label: c.company ? c.name + ' · ' + c.company : c.name }));
+  const sessionOptions = state.sessions.map(s => ({ value:s.id, label: s.title }));
+  return [
+    { name:'title', label:'Задача', type:'text', required:true, placeholder:'Отправить КП' },
+    { name:'clientId', label:'Клиент', type:'select', options: clientOptions, placeholder:'Без клиента' },
+    { name:'sessionId', label:'Занятие', type:'select', options: sessionOptions, placeholder:'Без занятия' },
+    { name:'dueDate', label:'Срок', type:'date' },
+    { name:'priority', label:'Приоритет', type:'select',
+      options: [{ value:'normal', label:'Обычный' }, { value:'high', label:'Высокий' }], default:'normal' },
+    { name:'done', label:'Статус', type:'checkbox', checkboxLabel:'Отметить как выполненную' }
+  ];
+}
+
+function openTaskForm(existing, prefill){
+  const values = existing ? {...existing} : { priority:'normal', ...(prefill||{}) };
+  openModal({
+    title: existing ? 'Редактировать задачу' : 'Новая задача',
+    bodyHTML: formFieldsHTML(taskFields(), values),
+    onSubmit(v){
+      if (!String(v.title || '').trim()){ toast('Укажите текст задачи', 'error'); return false; }
+      if (existing){ actions.updateTask(existing.id, v); toast('Задача обновлена'); }
+      else { actions.addTask(v); toast('Задача создана'); }
+      render();
+    }
+  });
+}
+
+function paymentFields(){
+  const clientOptions = state.clients.map(c => ({ value:c.id, label: c.company ? c.name + ' · ' + c.company : c.name }));
+  const sessionOptions = state.sessions.map(s => ({ value:s.id, label: s.title }));
+  return [
+    { name:'amount', label:'Сумма, ₽', type:'number', required:true, min:0, step:100 },
+    { name:'date', label:'Дата', type:'date', default: todayISO() },
+    { name:'type', label:'Тип', type:'select', options: PAYMENT_TYPES.map(p => ({ value:p.id, label:p.label })), default:'prepay' },
+    { name:'clientId', label:'Клиент', type:'select', options: clientOptions, placeholder:'Не указан' },
+    { name:'sessionId', label:'Занятие', type:'select', options: sessionOptions, placeholder:'Не указано' },
+    { name:'note', label:'Комментарий', type:'text' }
+  ];
+}
+
+function openPaymentForm(existing, prefill){
+  const values = existing ? {...existing} : { date: todayISO(), type:'prepay', ...(prefill||{}) };
+  const opts = {
+    title: existing ? 'Редактировать платёж' : 'Новый платёж',
+    bodyHTML: formFieldsHTML(paymentFields(), values),
+    onSubmit(v){
+      if (!v.amount || Number(v.amount) <= 0){ toast('Укажите сумму', 'error'); return false; }
+      if (existing){ actions.updatePayment(existing.id, v); toast('Платёж обновлён'); }
+      else { actions.addPayment(v); toast('Платёж добавлен'); }
+      render();
+    }
+  };
+  if (existing){
+    opts.footerHTML = `
+      <button type="button" class="btn btn-ghost btn-danger" id="pay-del">Удалить</button>
+      <button type="button" class="btn btn-ghost" data-close>Отмена</button>
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    `;
+    opts.onMount = (overlay, instance) => {
+      overlay.querySelector('#pay-del').addEventListener('click', () => {
+        instance.close();
+        confirmModal({
+          title: 'Удалить платёж?',
+          message: `${formatMoney(existing.amount)} будет удалён.`,
+          onConfirm(){ actions.deletePayment(existing.id); toast('Платёж удалён'); render(); }
+        });
+      });
+    };
+  }
+  openModal(opts);
+}
+
+function timeFields(){
+  const clientOptions = state.clients.map(c => ({ value:c.id, label: c.company ? c.name + ' · ' + c.company : c.name }));
+  const sessionOptions = state.sessions.map(s => ({ value:s.id, label: s.title }));
+  return [
+    { name:'minutes', label:'Длительность, мин', type:'number', required:true, min:1, step:5, placeholder:'60' },
+    { name:'date', label:'Дата', type:'date', default: todayISO() },
+    { name:'clientId', label:'Клиент', type:'select', options: clientOptions, placeholder:'Не указан' },
+    { name:'sessionId', label:'Занятие', type:'select', options: sessionOptions, placeholder:'Не указано' },
+    { name:'description', label:'Что делали', type:'text', placeholder:'Созвон, подготовка, ревью' }
+  ];
+}
+
+function openTimeForm(existing, prefill){
+  const values = existing ? {...existing} : { date: todayISO(), minutes:60, ...(prefill||{}) };
+  const opts = {
+    title: existing ? 'Редактировать запись' : 'Запись времени',
+    bodyHTML: formFieldsHTML(timeFields(), values),
+    onSubmit(v){
+      if (!v.minutes || Number(v.minutes) <= 0){ toast('Укажите длительность', 'error'); return false; }
+      if (existing){ actions.updateTimeEntry(existing.id, v); toast('Запись обновлена'); }
+      else { actions.addTimeEntry(v); toast('Запись добавлена'); }
+      render();
+    }
+  };
+  if (existing){
+    opts.footerHTML = `
+      <button type="button" class="btn btn-ghost btn-danger" id="te-del">Удалить</button>
+      <button type="button" class="btn btn-ghost" data-close>Отмена</button>
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    `;
+    opts.onMount = (overlay, instance) => {
+      overlay.querySelector('#te-del').addEventListener('click', () => {
+        instance.close();
+        confirmModal({
+          title: 'Удалить запись?',
+          message: `${formatHours(existing.minutes)} будет удалено.`,
+          onConfirm(){ actions.deleteTimeEntry(existing.id); toast('Запись удалена'); render(); }
+        });
+      });
+    };
+  }
+  openModal(opts);
+}
+
+function materialFields(){
+  return [
+    { name:'title', label:'Название', type:'text', required:true },
+    { name:'description', label:'Описание', type:'textarea', rows:2 },
+    { name:'url', label:'Ссылка', type:'text', placeholder:'https://…' },
+    { name:'tagsRaw', label:'Теги (через запятую)', type:'text', placeholder:'основы, промптинг' }
+  ];
+}
+
+function openMaterialForm(existing){
+  const values = existing ? { ...existing, tagsRaw: (existing.tags||[]).join(', ') } : {};
+  const opts = {
+    title: existing ? 'Редактировать материал' : 'Новый материал',
+    bodyHTML: formFieldsHTML(materialFields(), values),
+    onSubmit(v){
+      if (!String(v.title || '').trim()){ toast('Укажите название', 'error'); return false; }
+      const tags = String(v.tagsRaw || '').split(',').map(t => t.trim()).filter(Boolean);
+      const data = { title:v.title, description:v.description, url:v.url, tags };
+      if (existing){ actions.updateMaterial(existing.id, data); toast('Материал обновлён'); }
+      else { actions.addMaterial(data); toast('Материал добавлен'); }
+      render();
+    }
+  };
+  if (existing){
+    opts.footerHTML = `
+      <button type="button" class="btn btn-ghost btn-danger" id="mat-del">Удалить</button>
+      <button type="button" class="btn btn-ghost" data-close>Отмена</button>
+      <button type="submit" class="btn btn-primary">Сохранить</button>
+    `;
+    opts.onMount = (overlay, instance) => {
+      overlay.querySelector('#mat-del').addEventListener('click', () => {
+        instance.close();
+        confirmModal({
+          title: 'Удалить материал?',
+          message: `«${esc(existing.title)}» будет удалён.`,
+          onConfirm(){ actions.deleteMaterial(existing.id); toast('Материал удалён'); render(); }
+        });
+      });
+    };
+  }
+  openModal(opts);
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+$('#menu-btn').addEventListener('click', () => {
+  $('#sidebar').classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if (window.innerWidth > 1023) return;
+  const sidebar = $('#sidebar');
+  const menuBtn = $('#menu-btn');
+  if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuBtn.contains(e.target)){
+    sidebar.classList.remove('open');
+  }
+});
+
+render();
+</script>
+</body>
+</html>
